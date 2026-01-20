@@ -2,638 +2,328 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claim Form</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Claim App</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --primary: #2563eb; --bg: #f3f4f6; --card-bg: #ffffff; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); padding-bottom: 90px; margin: 0; }
         
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 0;
-        }
+        /* App Header */
+        .app-header { background: var(--primary); color: white; padding: 15px 20px; border-radius: 0 0 20px 20px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2); position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        .app-title { font-weight: 700; font-size: 1.1rem; margin: 0; }
+        .status-badge { font-size: 0.75rem; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 12px; backdrop-filter: blur(4px); }
 
-        .app-header {
-            background: white;
-            padding: 16px 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px 15px; }
 
-        .app-header h1 {
-            font-size: 20px;
-            font-weight: 700;
-            color: #1a1a1a;
-            margin: 0;
-        }
+        /* Cards */
+        .app-card { background: var(--card-bg); border-radius: 16px; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 16px; overflow: hidden; }
+        .card-header-custom { background: #f8fafc; border-bottom: 1px solid #eee; padding: 12px 15px; font-weight: 600; color: #333; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+        .card-body { padding: 15px; }
 
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            margin-top: 4px;
-        }
+        /* Inputs */
+        .form-label { font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 4px; display: block; }
+        .form-control { border-radius: 10px; border: 1px solid #e2e8f0; padding: 10px; font-size: 0.95rem; }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
 
-        .status-online { background: #d4edda; color: #155724; }
-        .status-offline { background: #f8d7da; color: #721c24; }
+        /* Location */
+        .btn-location { background: #eff6ff; color: var(--primary); border: 1px dashed var(--primary); width: 100%; padding: 12px; border-radius: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .location-text { font-size: 0.8rem; color: #666; text-align: center; margin-top: 8px; display: block; line-height: 1.4; }
 
-        .app-container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px 16px 100px;
-        }
+        /* Dynamic Entries */
+        .entry-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 12px; position: relative; }
+        .entry-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .entry-num { background: var(--primary); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; }
+        .btn-delete { color: #ef4444; background: white; border: 1px solid #fee2e2; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
-        .form-card {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
+        .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 
-        .card-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #1a1a1a;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .btn-add { width: 100%; padding: 12px; border: 2px dashed #cbd5e1; background: transparent; color: #64748b; border-radius: 10px; font-weight: 600; margin-top: 5px; }
+        
+        /* Summary Box */
+        .summary-box { background: #1e293b; color: white; border-radius: 12px; padding: 15px; }
+        .summ-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; opacity: 0.9; }
+        .summ-total { border-top: 1px solid rgba(255,255,255,0.2); margin-top: 10px; padding-top: 10px; font-weight: 700; font-size: 1.2rem; display: flex; justify-content: space-between; }
 
-        .card-title i { color: #667eea; }
+        /* Signatures */
+        .sig-wrap { border: 2px dashed #e2e8f0; border-radius: 10px; background: #fff; height: 100px; position: relative; margin-bottom: 10px; }
+        .sig-label { position: absolute; top: 5px; left: 8px; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: bold; pointer-events: none; }
+        canvas { width: 100%; height: 100%; border-radius: 10px; }
+        .sig-clear { position: absolute; bottom: 5px; right: 5px; font-size: 0.7rem; background: #f1f5f9; border: none; padding: 2px 8px; border-radius: 4px; color: #64748b; }
 
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #555;
-            margin-bottom: 6px;
-            display: block;
-        }
-
-        .form-control, .form-select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e8e8e8;
-            border-radius: 10px;
-            font-size: 15px;
-            transition: all 0.3s;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: #667eea;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .location-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-        }
-
-        .location-btn {
-            background: white;
-            color: #667eea;
-            border: none;
-            padding: 14px;
-            border-radius: 12px;
-            width: 100%;
-            font-weight: 700;
-            font-size: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: transform 0.2s;
-        }
-
-        .location-btn:active { transform: scale(0.98); }
-
-        .location-status {
-            margin-top: 12px;
-            padding: 12px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 10px;
-            font-size: 13px;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-
-        .location-success { background: rgba(40, 167, 69, 0.3); }
-        .location-error { background: rgba(220, 53, 69, 0.3); }
-
-        .entry-item {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            position: relative;
-        }
-
-        .entry-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .entry-number {
-            background: #667eea;
-            color: white;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 13px;
-        }
-
-        .delete-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        .row-2col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .row-3col {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 8px;
-        }
-
-        .add-btn {
-            background: #f8f9fa;
-            border: 2px dashed #dee2e6;
-            color: #667eea;
-            padding: 12px;
-            border-radius: 10px;
-            width: 100%;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .add-btn:hover {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .summary-box {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 12px;
-            padding: 16px;
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .summary-row:last-child {
-            border-bottom: none;
-            font-weight: 700;
-            font-size: 18px;
-            color: #667eea;
-            padding-top: 14px;
-            margin-top: 8px;
-            border-top: 2px solid #667eea;
-        }
-
-        .signature-pad-container {
-            border: 2px dashed #dee2e6;
-            border-radius: 12px;
-            padding: 12px;
-            background: #fafafa;
-            position: relative;
-            margin-bottom: 16px;
-        }
-
-        .sig-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: #999;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        .signature-canvas {
-            width: 100%;
-            height: 120px;
-            border: 1px solid #e8e8e8;
-            border-radius: 8px;
-            background: white;
-            touch-action: none;
-        }
-
-        .clear-sig-btn {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: white;
-            border: 1px solid #dee2e6;
-            color: #dc3545;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .submit-btn {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 18px;
-            font-size: 16px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-            z-index: 99;
-        }
-
-        .submit-btn:disabled {
-            opacity: 0.6;
-        }
-
-        .total-badge {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-weight: 700;
-            font-size: 12px;
-        }
-
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            opacity: 1;
-        }
-
-        .checkbox-group {
-            display: flex;
-            gap: 20px;
-            margin-top: 12px;
-        }
-
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
+        /* Bottom Bar */
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); display: flex; gap: 10px; z-index: 999; }
+        .btn-submit { flex: 1; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-submit:disabled { opacity: 0.7; }
     </style>
 </head>
 <body>
 
 <div class="app-header">
-    <h1><i class="bi bi-file-earmark-text"></i> Claim Form</h1>
-    <span id="statusBadge" class="status-badge status-online">System Ready</span>
+    <div class="app-title"><i class="bi bi-file-earmark-text"></i> Claim App</div>
+    <span id="dbStatus" class="status-badge">Connecting...</span>
 </div>
 
-<div class="app-container">
+<div class="container">
     <form id="claimForm">
-        <div class="form-card">
-            <div class="card-title"><i class="bi bi-person-circle"></i> Personal Information</div>
-            
-            <div class="form-group">
-                <label class="form-label">Name of Applicant *</label>
-                <input type="text" class="form-control" id="applicantName" required>
-            </div>
-
-            <div class="row-2col">
-                <div class="form-group">
-                    <label class="form-label">Department</label>
-                    <input type="text" class="form-control" id="dept">
+        
+        <div class="app-card">
+            <div class="card-body">
+                <button type="button" class="btn-location" onclick="getGeoLocation()">
+                    <i class="bi bi-geo-alt-fill"></i> Check-In Location
+                </button>
+                <input type="hidden" id="address">
+                <small id="locDisplay" class="location-text">Required for submission</small>
+                
+                <div class="d-flex gap-3 mt-3 justify-content-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="checkColombo" checked>
+                        <label class="form-check-label">Colombo Limits</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="checkOutstation">
+                        <label class="form-check-label">Outstation</label>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">EPF No</label>
-                    <input type="text" class="form-control" id="epfNo">
+            </div>
+        </div>
+
+        <div class="app-card">
+            <div class="card-header-custom"><i class="bi bi-person-fill"></i> Applicant Details</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Name of Applicant</label>
+                    <input type="text" class="form-control" id="applicantName" required>
+                </div>
+                <div class="row-2 mb-3">
+                    <div>
+                        <label class="form-label">Department</label>
+                        <input type="text" class="form-control" id="dept">
+                    </div>
+                    <div>
+                        <label class="form-label">EPF No</label>
+                        <input type="text" class="form-control" id="epfNo">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Customer Name</label>
+                    <input type="text" class="form-control" id="customerName">
+                </div>
+                <div>
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-control" id="appDate" required>
                 </div>
             </div>
+        </div>
 
-            <div class="form-group">
-                <label class="form-label">Customer Name</label>
-                <input type="text" class="form-control" id="customerName">
+        <div class="app-card">
+            <div class="card-header-custom">
+                <i class="bi bi-calendar-week"></i> Daily Entries
+                <span id="entryTotalDisplay" style="margin-left:auto; font-size:0.8rem; color:#2563eb;"></span>
             </div>
-
-            <div class="form-group">
-                <label class="form-label">Date *</label>
-                <input type="date" class="form-control" id="appDate" required>
+            <div class="card-body">
+                <div id="entriesContainer"></div>
+                <button type="button" class="btn-add" onclick="addEntry()">+ Add Day</button>
             </div>
         </div>
 
-        <div class="location-card">
-            <button type="button" class="location-btn" onclick="getLocation()">
-                <i class="bi bi-geo-alt-fill"></i> Check-In Location
-            </button>
-            <div id="locationStatus" class="location-status">
-                <span>Tap button to verify location</span>
-            </div>
-            <input type="hidden" id="locationData">
-            
-            <div class="checkbox-group">
-                <label>
-                    <input type="checkbox" id="checkColombo">
-                    <span>Colombo City</span>
-                </label>
-                <label>
-                    <input type="checkbox" id="checkOutstation">
-                    <span>Outstation</span>
-                </label>
+        <div class="app-card">
+            <div class="card-header-custom"><i class="bi bi-house"></i> Accommodation</div>
+            <div class="card-body">
+                <div id="accContainer"></div>
+                <button type="button" class="btn-add" onclick="addAcc()">+ Add Accommodation</button>
             </div>
         </div>
 
-        <div class="form-card">
-            <div class="card-title"><i class="bi bi-calendar-check"></i> Daily Entries</div>
-            <div id="entriesContainer"></div>
-            <button type="button" class="add-btn" onclick="addEntry()">
-                <i class="bi bi-plus-circle"></i> Add Entry
-            </button>
-        </div>
-
-        <div class="form-card">
-            <div class="card-title"><i class="bi bi-house"></i> Accommodation</div>
-            <div id="accContainer"></div>
-            <button type="button" class="add-btn" onclick="addAcc()">
-                <i class="bi bi-plus-circle"></i> Add Accommodation
-            </button>
-        </div>
-
-        <div class="form-card">
-            <div class="card-title"><i class="bi bi-fuel-pump"></i> Fuel & Transport</div>
-            
-            <div class="form-group">
-                <label class="form-label">Vehicle Number</label>
-                <input type="text" class="form-control" id="vehicleNo">
+        <div class="app-card">
+            <div class="card-header-custom"><i class="bi bi-fuel-pump"></i> Fuel & Transport</div>
+            <div class="card-body">
+                <div class="row-2 mb-3">
+                    <div><label class="form-label">Vehicle No</label><input type="text" class="form-control" id="vehicleNo"></div>
+                    <div><label class="form-label">Driver Name</label><input type="text" class="form-control" id="driverName"></div>
+                </div>
+                <div id="fuelContainer"></div>
+                <button type="button" class="btn-add" onclick="addFuel()">+ Add Fuel</button>
             </div>
-
-            <div class="form-group">
-                <label class="form-label">Driver Name</label>
-                <input type="text" class="form-control" id="driverName">
-            </div>
-
-            <div id="fuelContainer"></div>
-            <button type="button" class="add-btn" onclick="addFuel()">
-                <i class="bi bi-plus-circle"></i> Add Fuel Entry
-            </button>
         </div>
 
-        <div class="form-card">
-            <div class="card-title"><i class="bi bi-calculator"></i> Summary</div>
-            
-            <div class="form-group">
+        <div class="app-card">
+            <div class="card-body">
                 <label class="form-label">Remarks</label>
-                <textarea class="form-control" id="remarks" rows="3"></textarea>
-            </div>
+                <textarea class="form-control mb-3" id="remarks" rows="2"></textarea>
+                
+                <div style="display:none">
+                    <input type="text" id="acc_pr_seylan"><input type="text" id="acc_pr_other">
+                    <input type="text" id="acc_ups_seylan"><input type="text" id="acc_ups_other">
+                </div>
 
-            <div class="summary-box">
-                <div class="summary-row">
-                    <span>Total OT Hours:</span>
-                    <span class="total-badge" id="sumOT">0</span>
+                <div class="summary-box">
+                    <div class="summ-row"><span>Meals:</span> <span id="dispMeals">0.00</span></div>
+                    <div class="summ-row"><span>Acc:</span> <span id="dispAcc">0.00</span></div>
+                    <div class="summ-row"><span>Fuel:</span> <span id="dispFuel">0.00</span></div>
+                    <div class="summ-row"><span>OT Hrs:</span> <span id="dispOT">0</span></div>
+                    <div class="summ-total"><span>PAYABLE:</span> <span id="dispGrand">Rs 0.00</span></div>
                 </div>
-                <div class="summary-row">
-                    <span>Total Meals:</span>
-                    <span class="total-badge" id="sumMeals">Rs 0</span>
+                <input type="hidden" id="sumMeals"><input type="hidden" id="sumAcc">
+                <input type="hidden" id="sumFuel"><input type="hidden" id="sumOT">
+                <input type="hidden" id="grandTotal">
+            </div>
+        </div>
+
+        <div class="app-card">
+            <div class="card-header-custom"><i class="bi bi-pen"></i> Signatures</div>
+            <div class="card-body">
+                <div class="sig-wrap">
+                    <span class="sig-label">Applicant</span>
+                    <canvas id="sig1"></canvas>
+                    <button type="button" class="sig-clear" onclick="clearSig('sig1')">Clear</button>
                 </div>
-                <div class="summary-row">
-                    <span>Total Accommodation:</span>
-                    <span class="total-badge" id="sumAcc">Rs 0</span>
-                </div>
-                <div class="summary-row">
-                    <span>Total Fuel:</span>
-                    <span class="total-badge" id="sumFuel">Rs 0</span>
-                </div>
-                <div class="summary-row">
-                    <span>GRAND TOTAL:</span>
-                    <span id="grandTotal">Rs 0</span>
+                <div class="row-2">
+                    <div class="sig-wrap">
+                        <span class="sig-label">Team Leader</span>
+                        <canvas id="sig2"></canvas>
+                        <button type="button" class="sig-clear" onclick="clearSig('sig2')">Clear</button>
+                    </div>
+                    <div class="sig-wrap">
+                        <span class="sig-label">Manager</span>
+                        <canvas id="sig3"></canvas>
+                        <button type="button" class="sig-clear" onclick="clearSig('sig3')">Clear</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="form-card">
-            <div class="card-title"><i class="bi bi-pen"></i> Signatures</div>
-            
-            <div class="signature-pad-container">
-                <label class="sig-label">Applicant Signature</label>
-                <canvas id="sig1" class="signature-canvas"></canvas>
-                <button type="button" class="clear-sig-btn" onclick="clearSig('sig1')">Clear</button>
-            </div>
-
-            <div class="signature-pad-container">
-                <label class="sig-label">Team Leader</label>
-                <canvas id="sig2" class="signature-canvas"></canvas>
-                <button type="button" class="clear-sig-btn" onclick="clearSig('sig2')">Clear</button>
-            </div>
-
-            <div class="signature-pad-container">
-                <label class="sig-label">Approved By</label>
-                <canvas id="sig3" class="signature-canvas"></canvas>
-                <button type="button" class="clear-sig-btn" onclick="clearSig('sig3')">Clear</button>
-            </div>
+        <div class="bottom-bar">
+            <button type="button" class="btn btn-light" onclick="calculateAll()" style="width:50px; border-radius:10px;"><i class="bi bi-arrow-clockwise"></i></button>
+            <button type="submit" class="btn-submit" id="submitBtn">
+                <i class="bi bi-cloud-arrow-up"></i> Submit & Download
+            </button>
         </div>
 
-        <button type="submit" class="submit-btn" id="submitBtn">
-            <i class="bi bi-download"></i> Download PDF
-        </button>
     </form>
 </div>
 
 <script>
-    let entryCount = 0;
+    // --- CONFIGURATION ---
+    const SUPABASE_URL = 'https://ezdptfskycprzmbrxspx.supabase.co';
+    // -----------------------------------------------------------
+    // PASTE YOUR KEY BELOW
+    const SUPABASE_KEY = 'PASTE_YOUR_SUPABASE_ANON_KEY_HERE';
+    // -----------------------------------------------------------
+
+    let supabase;
     let pads = {};
+    let entryCount = 0;
 
     window.onload = function() {
         document.getElementById('appDate').valueAsDate = new Date();
-        // Initialize Signatures and First Rows immediately
         initSignatures();
         addEntry();
         addAcc();
         addFuel();
+        
+        // Initialize Database
+        if(SUPABASE_KEY.includes('PASTE')) {
+            updateStatus(false, 'Missing Key');
+        } else {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                updateStatus(true, 'System Online');
+            } catch(e) {
+                console.error(e);
+                updateStatus(false, 'Offline');
+            }
+        }
     };
 
-    // --- LOCATION FUNCTION ---
-    function getLocation() {
-        const status = document.getElementById('locationStatus');
-        const hidden = document.getElementById('locationData');
+    function updateStatus(isOnline, text) {
+        const el = document.getElementById('dbStatus');
+        el.textContent = text;
+        el.style.backgroundColor = isOnline ? 'rgba(255,255,255,0.2)' : '#ef4444';
+    }
+
+    // --- LOCATION ---
+    function getGeoLocation() {
+        const display = document.getElementById('locDisplay');
+        const hidden = document.getElementById('address');
         
-        if (!navigator.geolocation) {
-            status.className = 'location-status location-error';
-            status.innerHTML = '<i class="bi bi-x-circle"></i> Location not supported';
-            return;
-        }
+        if(!navigator.geolocation) { alert("GPS not supported"); return; }
+        
+        display.textContent = "Locating...";
+        display.style.color = "blue";
 
-        status.className = 'location-status';
-        status.innerHTML = '<i class="bi bi-hourglass-split"></i> Getting location...';
-
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                
-                try {
-                    const response = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
-                        { headers: { 'User-Agent': 'ClaimFormApp' } }
-                    );
-                    const data = await response.json();
-                    
-                    if (data && data.display_name) {
-                        const city = data.address.city || data.address.town || data.address.village || 'Location';
-                        hidden.value = data.display_name;
-                        status.className = 'location-status location-success';
-                        status.innerHTML = `<div><i class="bi bi-check-circle"></i> <strong>${city}</strong><br><small style="font-size:11px;">${data.display_name.substring(0, 80)}...</small></div>`;
-                    } else {
-                        throw new Error('Address not found');
-                    }
-                } catch (error) {
-                    hidden.value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-                    status.className = 'location-status location-success';
-                    status.innerHTML = `<i class="bi bi-check-circle"></i> Location captured<br><small>Coords: ${lat.toFixed(4)}, ${lon.toFixed(4)}</small>`;
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const { latitude, longitude } = pos.coords;
+            try {
+                // Free Geocoding
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                const data = await res.json();
+                if(data.display_name) {
+                    hidden.value = data.display_name;
+                    display.textContent = "✅ " + (data.address.city || data.address.town || "Location Found");
+                    display.style.color = "green";
                 }
-            },
-            (error) => {
-                status.className = 'location-status location-error';
-                if (error.code === 1) {
-                    status.innerHTML = '<i class="bi bi-x-circle"></i> Permission denied<br><small>Please allow location access</small>';
-                } else if (error.code === 2) {
-                    status.innerHTML = '<i class="bi bi-x-circle"></i> Location unavailable<br><small>Check GPS settings</small>';
-                } else {
-                    status.innerHTML = '<i class="bi bi-x-circle"></i> Timeout<br><small>Try again</small>';
-                }
-            },
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-        );
+            } catch(e) {
+                hidden.value = `${latitude}, ${longitude}`;
+                display.textContent = "✅ Coords Saved";
+                display.style.color = "green";
+            }
+        }, (err) => {
+            alert("Error: " + err.message + ". Ensure GPS is ON and site is HTTPS.");
+            display.textContent = "❌ GPS Error";
+            display.style.color = "red";
+        }, { enableHighAccuracy: true, timeout: 10000 });
     }
 
     // --- SIGNATURES ---
     function initSignatures() {
         ['sig1', 'sig2', 'sig3'].forEach(id => {
-            const canvas = document.getElementById(id);
-            if(canvas) {
-                // Adjust canvas for high DPI
-                const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                canvas.width = canvas.offsetWidth * ratio;
-                canvas.height = canvas.offsetHeight * ratio;
-                canvas.getContext("2d").scale(ratio, ratio);
-                
-                pads[id] = new SignaturePad(canvas, { backgroundColor: 'rgba(255,255,255,1)' });
-            }
+            const c = document.getElementById(id);
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            c.width = c.offsetWidth * ratio;
+            c.height = c.offsetHeight * ratio;
+            c.getContext("2d").scale(ratio, ratio);
+            pads[id] = new SignaturePad(c, { backgroundColor: 'rgba(255,255,255,0)' });
         });
     }
+    function clearSig(id) { pads[id].clear(); }
 
-    function clearSig(id) {
-        if(pads[id]) pads[id].clear();
-    }
-
-    // --- ROW ADDING FUNCTIONS ---
+    // --- ROWS ---
     function addEntry() {
         entryCount++;
         const div = document.createElement('div');
-        div.className = 'entry-item';
+        div.className = 'entry-item main-entry';
         div.innerHTML = `
             <div class="entry-header">
-                <span class="entry-number">${entryCount}</span>
-                <button type="button" class="delete-btn" onclick="this.closest('.entry-item').remove(); calculate();">
-                    <i class="bi bi-trash"></i>
-                </button>
+                <div class="entry-num">${entryCount}</div>
+                <div class="btn-delete" onclick="this.closest('.entry-item').remove(); calculateAll();"><i class="bi bi-trash"></i></div>
             </div>
-            
-            <div class="form-group">
-                <label class="form-label">Onsite Location</label>
-                <input type="text" class="form-control">
+            <div class="mb-2"><input type="text" class="form-control d-onsite" placeholder="Onsite Location"></div>
+            <div class="row-2 mb-2">
+                <input type="date" class="form-control d-date">
+                <input type="number" class="form-control ot-hr" placeholder="OT Hours" oninput="calculateAll()">
             </div>
-            
-            <div class="row-2col">
-                <div class="form-group">
-                    <label class="form-label">Date</label>
-                    <input type="date" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">OT Hours</label>
-                    <input type="number" class="form-control ot-hours" oninput="calculate()" step="0.5" min="0">
-                </div>
+            <div class="row-2 mb-2">
+                <input type="time" class="form-control t-from">
+                <input type="time" class="form-control t-to">
             </div>
-            
-            <div class="row-2col">
-                <div class="form-group">
-                    <label class="form-label">From Time</label>
-                    <input type="time" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">To Time</label>
-                    <input type="time" class="form-control">
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Meals (Rs)</label>
-                <div class="row-2col">
-                    <input type="number" class="form-control meal-input" placeholder="Breakfast" oninput="calculate()" min="0">
-                    <input type="number" class="form-control meal-input" placeholder="Lunch" oninput="calculate()" min="0">
-                </div>
-                <div class="row-2col" style="margin-top:8px;">
-                    <input type="number" class="form-control meal-input" placeholder="Tea" oninput="calculate()" min="0">
-                    <input type="number" class="form-control meal-input" placeholder="Dinner" oninput="calculate()" min="0">
-                </div>
+            <label class="form-label">Meals (Rs)</label>
+            <div class="row-2">
+                <input type="number" class="form-control m-bf" placeholder="B'fast" oninput="calculateAll()">
+                <input type="number" class="form-control m-ln" placeholder="Lunch" oninput="calculateAll()">
+                <input type="number" class="form-control m-te" placeholder="Tea" oninput="calculateAll()">
+                <input type="number" class="form-control m-dn" placeholder="Dinner" oninput="calculateAll()">
             </div>
         `;
         document.getElementById('entriesContainer').appendChild(div);
@@ -641,176 +331,184 @@
 
     function addAcc() {
         const div = document.createElement('div');
-        div.className = 'entry-item';
+        div.className = 'entry-item acc-entry';
         div.innerHTML = `
-            <div class="entry-header">
-                <span class="entry-number"><i class="bi bi-house"></i></span>
-                <button type="button" class="delete-btn" onclick="this.closest('.entry-item').remove(); calculate();">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-            <div class="row-2col">
-                <div class="form-group">
-                    <label class="form-label">Date</label>
-                    <input type="date" class="form-control">
+            <div class="row-2 align-items-center">
+                <input type="date" class="form-control acc-date">
+                <div class="d-flex gap-2">
+                    <input type="number" class="form-control acc-amt" placeholder="Amount" oninput="calculateAll()">
+                    <div class="btn-delete" onclick="this.closest('.entry-item').remove(); calculateAll();"><i class="bi bi-trash"></i></div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Amount (Rs)</label>
-                    <input type="number" class="form-control acc-input" oninput="calculate()" min="0">
-                </div>
-            </div>
-        `;
+            </div>`;
         document.getElementById('accContainer').appendChild(div);
     }
 
     function addFuel() {
         const div = document.createElement('div');
-        div.className = 'entry-item';
+        div.className = 'entry-item fuel-entry';
         div.innerHTML = `
-            <div class="entry-header">
-                <span class="entry-number"><i class="bi bi-fuel-pump"></i></span>
-                <button type="button" class="delete-btn" onclick="this.closest('.entry-item').remove(); calculate();">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-            <div class="row-3col">
-                <div class="form-group">
-                    <label class="form-label">Date</label>
-                    <input type="date" class="form-control">
+            <div class="row-3 align-items-center">
+                <input type="date" class="form-control fuel-date">
+                <input type="number" class="form-control fuel-km" placeholder="KM">
+                <div class="d-flex gap-1">
+                    <input type="number" class="form-control fuel-amt" placeholder="Amt" oninput="calculateAll()">
+                    <div class="btn-delete" onclick="this.closest('.entry-item').remove(); calculateAll();"><i class="bi bi-trash"></i></div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">KM</label>
-                    <input type="number" class="form-control" min="0">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Amount</label>
-                    <input type="number" class="form-control fuel-input" oninput="calculate()" min="0">
-                </div>
-            </div>
-        `;
+            </div>`;
         document.getElementById('fuelContainer').appendChild(div);
     }
 
-    // --- CALCULATION LOGIC ---
-    function calculate() {
-        let meals = 0, ot = 0, acc = 0, fuel = 0;
+    // --- CALCULATION ---
+    function calculateAll() {
+        let m=0, ot=0, ac=0, fu=0;
 
-        // Sum up all meal inputs
-        document.querySelectorAll('.meal-input').forEach(i => {
-            const val = parseFloat(i.value);
-            if(!isNaN(val)) meals += val;
+        // Sum Meals
+        document.querySelectorAll('.main-entry').forEach(row => {
+            ['m-bf','m-ln','m-te','m-dn'].forEach(cls => {
+                m += Number(row.querySelector('.'+cls).value) || 0;
+            });
+            ot += Number(row.querySelector('.ot-hr').value) || 0;
         });
 
-        // Sum up OT Hours
-        document.querySelectorAll('.ot-hours').forEach(i => {
-            const val = parseFloat(i.value);
-            if(!isNaN(val)) ot += val;
-        });
+        document.querySelectorAll('.acc-amt').forEach(i => ac += Number(i.value) || 0);
+        document.querySelectorAll('.fuel-amt').forEach(i => fu += Number(i.value) || 0);
 
-        // Sum up Accommodation
-        document.querySelectorAll('.acc-input').forEach(i => {
-            const val = parseFloat(i.value);
-            if(!isNaN(val)) acc += val;
-        });
+        document.getElementById('dispMeals').textContent = m.toFixed(2);
+        document.getElementById('dispAcc').textContent = ac.toFixed(2);
+        document.getElementById('dispFuel').textContent = fu.toFixed(2);
+        document.getElementById('dispOT').textContent = ot;
+        document.getElementById('dispGrand').textContent = "Rs " + (m + ac + fu).toFixed(2);
 
-        // Sum up Fuel
-        document.querySelectorAll('.fuel-input').forEach(i => {
-            const val = parseFloat(i.value);
-            if(!isNaN(val)) fuel += val;
-        });
-
-        // Update Text Content properly
-        document.getElementById('sumOT').textContent = ot.toFixed(1);
-        document.getElementById('sumMeals').textContent = 'Rs ' + meals.toFixed(2);
-        document.getElementById('sumAcc').textContent = 'Rs ' + acc.toFixed(2);
-        document.getElementById('sumFuel').textContent = 'Rs ' + fuel.toFixed(2);
-        
-        const grandTotal = meals + acc + fuel;
-        document.getElementById('grandTotal').textContent = 'Rs ' + grandTotal.toFixed(2);
+        // Set hidden values for Save
+        document.getElementById('sumMeals').value = m;
+        document.getElementById('sumOT').value = ot;
+        document.getElementById('sumAcc').value = ac;
+        document.getElementById('sumFuel').value = fu;
+        document.getElementById('grandTotal').value = m + ac + fu;
     }
 
-    // --- PDF GENERATION ---
-    document.getElementById('claimForm').addEventListener('submit', function(e) {
+    // --- SUBMIT ---
+    document.getElementById('claimForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        
         const btn = document.getElementById('submitBtn');
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating PDF...';
-        btn.disabled = true;
+        const orig = btn.innerHTML;
+        btn.innerHTML = 'Processing...'; btn.disabled = true;
 
-        setTimeout(() => {
-            try {
-                generatePDF();
-                btn.innerHTML = '<i class="bi bi-check-circle"></i> PDF Downloaded!';
-            } catch(err) {
-                console.error(err);
-                alert("Error generating PDF: " + err.message);
-                btn.innerHTML = 'Error! Try Again';
+        calculateAll();
+
+        const formData = {
+            applicant_name: document.getElementById('applicantName').value,
+            department: document.getElementById('dept').value,
+            epf_no: document.getElementById('epfNo').value,
+            customer_name: document.getElementById('customerName').value,
+            location_address: document.getElementById('address').value,
+            claim_date: document.getElementById('appDate').value,
+            total_ot_hours: document.getElementById('sumOT').value,
+            total_meals_rs: document.getElementById('sumMeals').value,
+            total_acc_rs: document.getElementById('sumAcc').value,
+            total_fuel_rs: document.getElementById('sumFuel').value,
+            grand_total_rs: document.getElementById('grandTotal').value,
+            driver_name: document.getElementById('driverName').value,
+            vehicle_no: document.getElementById('vehicleNo').value
+        };
+
+        try {
+            if(supabase) {
+                const { error } = await supabase.from('claim_reports').insert([formData]);
+                if(error) throw error;
             }
-            
-            setTimeout(() => {
-                btn.innerHTML = '<i class="bi bi-download"></i> Download PDF';
-                btn.disabled = false;
-            }, 2000);
-        }, 500);
+            generatePDF();
+            alert("Success! Saved & Downloaded.");
+        } catch(err) {
+            console.error(err);
+            if(confirm("DB Error: " + err.message + ". Download PDF anyway?")) generatePDF();
+        } finally {
+            btn.innerHTML = orig; btn.disabled = false;
+        }
     });
 
+    // --- PDF ---
     function generatePDF() {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
+        const doc = new jsPDF('l', 'mm', 'a4'); // Landscape
 
-        doc.setFontSize(16);
-        doc.setFont("helvetica", "bold");
-        doc.text("Overtime & Claim Form", 105, 15, null, null, "center");
-
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
+        // Header
+        doc.setFontSize(14); doc.setFont("helvetica", "bold");
+        doc.text("CLAIM FORM", 148, 15, null, null, "center");
         
+        doc.setFontSize(10); doc.setFont("helvetica", "normal");
         let y = 30;
-        doc.text(`Name: ${document.getElementById('applicantName').value}`, 15, y);
-        doc.text(`Date: ${document.getElementById('appDate').value}`, 150, y);
-        y += 6;
-        doc.text(`Dept: ${document.getElementById('dept').value}`, 15, y);
-        doc.text(`EPF: ${document.getElementById('epfNo').value}`, 70, y);
-        doc.text(`Customer: ${document.getElementById('customerName').value}`, 110, y);
-        y += 6;
-        const loc = document.getElementById('locationData').value || "Not Checked In";
-        doc.text(`Location: ${loc}`, 15, y);
+        doc.text(`Applicant: ${document.getElementById('applicantName').value}`, 15, y);
+        doc.text(`Customer: ${document.getElementById('customerName').value}`, 100, y);
+        doc.text(`Date: ${document.getElementById('appDate').value}`, 220, y);
+        y+=7;
+        doc.text(`Location: ${document.getElementById('address').value || 'Not set'}`, 15, y);
+        doc.text(`Dept: ${document.getElementById('dept').value}`, 220, y);
 
-        y += 10;
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.text("Summary", 15, y);
+        // MAIN TABLE CONSTRUCTION
+        let mainRows = [];
+        document.querySelectorAll('.main-entry').forEach((div, i) => {
+            const date = div.querySelector('.d-date').value;
+            const onsite = div.querySelector('.d-onsite').value;
+            const fTime = div.querySelector('.t-from').value;
+            const tTime = div.querySelector('.t-to').value;
+            const bf = Number(div.querySelector('.m-bf').value)||0;
+            const ln = Number(div.querySelector('.m-ln').value)||0;
+            const te = Number(div.querySelector('.m-te').value)||0;
+            const dn = Number(div.querySelector('.m-dn').value)||0;
+            const totalMeal = bf+ln+te+dn;
+            const ot = div.querySelector('.ot-hr').value;
+            
+            mainRows.push([
+                i+1, onsite, date, fTime, tTime, bf||'', ln||'', te||'', dn||'', totalMeal||'', ot, totalMeal // Day total logic
+            ]);
+        });
+
+        doc.autoTable({
+            startY: 50,
+            head: [[
+                {content:'#', rowSpan:2}, {content:'Onsite', rowSpan:2}, {content:'Date', rowSpan:2}, 
+                {content:'Time', colSpan:2}, {content:'Meals (Rs)', colSpan:5}, 
+                {content:'OT', rowSpan:2}, {content:'Total', rowSpan:2}
+            ], ['From','To','Bfast','Lunch','Tea','Dinner','Total']],
+            body: mainRows,
+            theme: 'grid', styles: { fontSize: 8 }
+        });
+
+        let fy = doc.lastAutoTable.finalY + 10;
+
+        // EXPENSE TABLES
+        doc.text("Expenses", 15, fy);
+        let expRows = [];
+        document.querySelectorAll('.acc-entry').forEach(div => {
+            expRows.push(['Accommodation', div.querySelector('.acc-date').value, div.querySelector('.acc-amt').value]);
+        });
+        document.querySelectorAll('.fuel-entry').forEach(div => {
+            expRows.push(['Fuel', div.querySelector('.fuel-date').value, div.querySelector('.fuel-amt').value]);
+        });
         
-        y += 8;
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.text(`Total OT Hours: ${document.getElementById('sumOT').textContent}`, 15, y);
-        y += 6;
-        doc.text(`Total Meals: ${document.getElementById('sumMeals').textContent}`, 15, y);
-        y += 6;
-        doc.text(`Total Accommodation: ${document.getElementById('sumAcc').textContent}`, 15, y);
-        y += 6;
-        doc.text(`Total Fuel: ${document.getElementById('sumFuel').textContent}`, 15, y);
-        y += 8;
-        doc.setFont("helvetica", "bold");
-        doc.text(`GRAND TOTAL: ${document.getElementById('grandTotal').textContent}`, 15, y);
+        doc.autoTable({
+            startY: fy+2, margin:{left:15}, tableWidth:100,
+            head:[['Type','Date','Amount']], body:expRows
+        });
 
-        // Signatures
-        y += 20;
-        if (!pads['sig1'].isEmpty()) {
-            doc.addImage(pads['sig1'].toDataURL(), 'PNG', 15, y, 50, 30);
-            doc.text("Applicant", 15, y + 35);
-        }
-        if (!pads['sig2'].isEmpty()) {
-            doc.addImage(pads['sig2'].toDataURL(), 'PNG', 80, y, 50, 30);
-            doc.text("Team Leader", 80, y + 35);
-        }
-        if (!pads['sig3'].isEmpty()) {
-            doc.addImage(pads['sig3'].toDataURL(), 'PNG', 145, y, 50, 30);
-            doc.text("Approved", 145, y + 35);
-        }
+        // TOTALS
+        let ny = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(12); doc.setFont("helvetica", "bold");
+        doc.text(`GRAND TOTAL: Rs. ${document.getElementById('grandTotal').value}`, 150, ny);
 
-        doc.save(`Claim_${document.getElementById('applicantName').value}.pdf`);
+        // SIGNATURES
+        let sigY = 170;
+        if(!pads['sig1'].isEmpty()) doc.addImage(pads['sig1'].toDataURL(), 'PNG', 15, sigY-20, 40, 20);
+        if(!pads['sig2'].isEmpty()) doc.addImage(pads['sig2'].toDataURL(), 'PNG', 100, sigY-20, 40, 20);
+        if(!pads['sig3'].isEmpty()) doc.addImage(pads['sig3'].toDataURL(), 'PNG', 200, sigY-20, 40, 20);
+        
+        doc.setFontSize(10); doc.setFont("helvetica", "normal");
+        doc.text("Applicant", 15, sigY+5); doc.line(15, sigY, 55, sigY);
+        doc.text("Team Leader", 100, sigY+5); doc.line(100, sigY, 140, sigY);
+        doc.text("Approved", 200, sigY+5); doc.line(200, sigY, 240, sigY);
+
+        doc.save('Claim_Form.pdf');
     }
 </script>
 
