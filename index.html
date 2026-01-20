@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overtime & Claim Form</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Claim App</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
@@ -15,185 +15,247 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        body { font-family: 'Roboto', sans-serif; background-color: #f4f6f9; padding: 20px; font-size: 13px; }
-        .container { background: white; max-width: 1400px; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        :root { --primary: #2563eb; --bg: #f3f4f6; --card-bg: #ffffff; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); padding-bottom: 80px; }
         
-        h4 { text-align: center; font-weight: 700; text-transform: uppercase; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .section-header { background: #e9ecef; padding: 6px 10px; font-weight: bold; margin-top: 15px; border-radius: 4px; font-size: 0.9rem; }
-        
-        /* Table Styles */
-        table input { width: 100%; border: 1px solid #dee2e6; text-align: center; padding: 4px; font-size: 13px; border-radius: 3px; }
-        table input:focus { border-color: #80bdff; outline: none; }
-        th { background-color: #f8f9fa; text-align: center; vertical-align: middle; font-size: 12px; font-weight: 600; }
-        td { padding: 2px !important; }
-        
-        /* Signature Styles */
-        .sig-box { border: 1px dashed #ccc; height: 100px; position: relative; background: #fafafa; border-radius: 4px; }
-        .sig-pad { width: 100%; height: 100%; }
-        .sig-clear { position: absolute; bottom: 5px; right: 5px; font-size: 10px; }
-        .sig-label { position: absolute; top: 5px; left: 5px; font-size: 10px; color: #666; font-weight: bold; text-transform: uppercase; }
+        /* App Header */
+        .app-header { background: var(--primary); color: white; padding: 15px 20px; border-radius: 0 0 20px 20px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2); margin-bottom: 20px; }
+        .app-title { font-weight: 700; font-size: 1.2rem; margin: 0; }
+        .app-subtitle { font-size: 0.8rem; opacity: 0.9; }
+        .status-badge { font-size: 0.7rem; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; float: right; }
 
-        .read-only-total { background-color: #e2e3e5; font-weight: bold; color: #333; }
-        .btn-action { margin-top: 20px; width: 100%; padding: 12px; font-weight: bold; font-size: 1.1rem; }
+        /* Cards */
+        .app-card { background: var(--card-bg); border-radius: 16px; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 16px; overflow: hidden; }
+        .card-header-custom { background: transparent; border-bottom: 1px solid #eee; padding: 15px; font-weight: 600; color: #333; display: flex; align-items: center; gap: 8px; }
+        .card-body { padding: 15px; }
+
+        /* Floating Inputs */
+        .form-floating > .form-control { border-radius: 12px; border: 1px solid #e5e7eb; background: #f9fafb; height: 50px; min-height: 50px; }
+        .form-floating > label { padding-top: 0.8rem; }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); background: white; }
+
+        /* Location Button */
+        .btn-location { background: #eff6ff; color: var(--primary); border: 1px dashed var(--primary); width: 100%; padding: 12px; border-radius: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
+        .btn-location:active { background: #dbeafe; transform: scale(0.98); }
+        .location-text { font-size: 0.85rem; color: #666; text-align: center; margin-top: 8px; display: block; }
+
+        /* Tables */
+        .table-responsive { border-radius: 12px; border: 1px solid #eee; }
+        table { margin: 0; font-size: 0.85rem; }
+        th { background: #f8f9fa !important; font-weight: 600; color: #555; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; }
+        td input { border: none; background: transparent; width: 100%; text-align: center; padding: 5px 0; color: #333; font-weight: 500; }
+        td input:focus { background: #eff6ff; outline: none; border-radius: 4px; }
         
-        /* Location Status Styles */
-        .location-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 5px; text-align: center; }
-        .loc-text { font-weight: bold; color: #555; display: block; margin-top: 5px; font-size: 0.9rem; }
-        .text-success { color: #198754 !important; }
-        .text-danger { color: #dc3545 !important; }
-        
-        /* Database Status Badge */
-        .badge-status { position: absolute; top: 20px; right: 20px; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .bg-offline { background-color: #dc3545; }
-        .bg-online { background-color: #28a745; }
+        /* Summary Box */
+        .summary-box { background: #1e293b; color: white; border-radius: 12px; padding: 15px; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; opacity: 0.9; }
+        .summary-total { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.2); font-weight: 700; font-size: 1.2rem; }
+
+        /* Signatures */
+        .sig-container { background: #f8f9fa; border: 2px dashed #cbd5e1; border-radius: 12px; height: 100px; position: relative; margin-bottom: 10px; }
+        .sig-label { position: absolute; top: 5px; left: 10px; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; pointer-events: none; }
+        canvas { width: 100%; height: 100%; border-radius: 12px; }
+        .sig-clear { position: absolute; bottom: 5px; right: 5px; background: white; border: 1px solid #eee; border-radius: 6px; padding: 2px 8px; font-size: 0.7rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        /* Bottom Action Bar */
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); display: flex; gap: 10px; z-index: 1000; }
+        .btn-main { flex: 1; border-radius: 12px; padding: 12px; font-weight: 700; border: none; background: var(--primary); color: white; font-size: 1rem; }
+        .btn-calc { width: 50px; border-radius: 12px; background: #e0e7ff; color: var(--primary); border: none; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
-<div class="container position-relative">
-    <div id="dbStatus" class="badge-status bg-offline">Checking System...</div>
-    
-    <h4>Over Time / Meals / Accommodation Claim Form</h4>
-    
+<div class="app-header">
+    <span id="dbStatus" class="status-badge">Checking...</span>
+    <h1 class="app-title">Claim App</h1>
+    <span class="app-subtitle">Overtime & Meals Reimbursement</span>
+</div>
+
+<div class="container">
     <form id="claimForm">
-        <div class="row g-2">
-            <div class="col-md-3"><label class="form-label">Name of Applicant</label><input type="text" class="form-control" id="applicantName" required></div>
-            <div class="col-md-2"><label class="form-label">Department</label><input type="text" class="form-control" id="dept"></div>
-            <div class="col-md-2"><label class="form-label">EPF No</label><input type="text" class="form-control" id="epfNo"></div>
-            <div class="col-md-3"><label class="form-label">Name of Customer</label><input type="text" class="form-control" id="customerName"></div>
-            <div class="col-md-2"><label class="form-label">Date</label><input type="date" class="form-control" id="appDate" required></div>
-        </div>
         
-        <div class="row g-2 mt-3">
-            <div class="col-md-6">
-                <div class="location-box">
-                    <button class="btn btn-primary btn-sm w-100 mb-2" type="button" onclick="getGeoLocation()">
-                        <i class="bi bi-geo-alt-fill"></i> Check-In / Get Location
-                    </button>
-                    <input type="hidden" id="address">
-                    <span id="locDisplay" class="loc-text">Click button to verify location...</span>
-                </div>
-            </div>
-            
-            <div class="col-md-6 d-flex align-items-center">
-                <div class="d-flex gap-4 ps-3">
+        <div class="app-card">
+            <div class="card-body">
+                <button type="button" class="btn-location" onclick="getGeoLocation()">
+                    <i class="bi bi-geo-alt-fill"></i> Check-In / Verify GPS
+                </button>
+                <input type="hidden" id="address">
+                <small id="locDisplay" class="location-text">Location required for submission</small>
+                
+                <div class="d-flex gap-3 mt-3 justify-content-center">
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="checkColombo">
-                        <label class="form-check-label" for="checkColombo">Colombo City Limits</label>
+                        <input class="form-check-input" type="checkbox" id="checkColombo" checked>
+                        <label class="form-check-label" style="font-size:0.85rem">Colombo Limits</label>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="checkOutstation">
-                        <label class="form-check-label" for="checkOutstation">Outstation</label>
+                        <label class="form-check-label" style="font-size:0.85rem">Outstation</label>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="table-responsive mt-4">
-            <table class="table table-bordered table-sm">
-                <thead>
-                    <tr>
-                        <th rowspan="2" width="40">#</th>
-                        <th rowspan="2">Onsite Nos</th>
-                        <th rowspan="2" width="110">Date</th>
-                        <th colspan="2">Time</th>
-                        <th colspan="5">Meals Entitlement (Rs)</th>
-                        <th rowspan="2">OT Hours</th>
-                        <th rowspan="2">Total Day (Rs)</th>
-                        <th rowspan="2" width="30"></th>
-                    </tr>
-                    <tr>
-                        <th>From</th><th>To</th><th>B'fast</th><th>Lunch</th><th>Tea</th><th>Dinner</th><th>Total</th>
-                    </tr>
-                </thead>
-                <tbody id="mainBody"></tbody>
-            </table>
-            <button type="button" class="btn btn-sm btn-secondary" onclick="addMainRow()">+ Add Row</button>
-        </div>
-
-        <div class="row mt-3">
-            
-            <div class="col-md-4">
-                <div class="section-header">Accommodation</div>
-                <table class="table table-bordered table-sm mb-2" id="accTable">
-                    <thead><tr><th>Date</th><th>Amount Rs.</th><th width="30"></th></tr></thead>
-                    <tbody id="accBody"></tbody>
-                </table>
-                <button type="button" class="btn btn-sm btn-secondary mb-3" onclick="addAccRow()">+ Add Acc</button>
-
-                <div class="card p-3 bg-light border-0">
-                    <div class="d-flex justify-content-between mb-1"><span>Total OT Hrs:</span> <input type="number" id="sumOT" class="read-only-total form-control form-control-sm w-25" readonly></div>
-                    <div class="d-flex justify-content-between mb-1"><span>Total Meals:</span> <input type="number" id="sumMeals" class="read-only-total form-control form-control-sm w-25" readonly></div>
-                    <div class="d-flex justify-content-between mb-1"><span>Total Acc:</span> <input type="number" id="sumAcc" class="read-only-total form-control form-control-sm w-25" readonly></div>
-                    <div class="d-flex justify-content-between mb-1"><span>Total Fuel:</span> <input type="number" id="sumFuel" class="read-only-total form-control form-control-sm w-25" readonly></div>
-                    <hr>
-                    <div class="d-flex justify-content-between fw-bold align-items-center">
-                        <span style="font-size:1.1rem;">GRAND TOTAL:</span> 
-                        <input type="number" id="grandTotal" class="read-only-total form-control w-50" style="font-size:1.2rem; height: 40px;" readonly>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="section-header">Summary (for Accounts)</div>
-                <table class="table table-bordered table-sm">
-                    <thead><tr><th>Item</th><th>Seylan</th><th>Others</th></tr></thead>
-                    <tbody>
-                        <tr><td>Printers</td><td><input type="text" id="acc_pr_seylan"></td><td><input type="text" id="acc_pr_other"></td></tr>
-                        <tr><td>UPS</td><td><input type="text" id="acc_ups_seylan"></td><td><input type="text" id="acc_ups_other"></td></tr>
-                    </tbody>
-                </table>
-                <label class="mt-2 fw-bold form-label">Remarks:</label>
-                <textarea class="form-control" id="remarks" rows="6" placeholder="Enter remarks here..."></textarea>
-            </div>
-
-            <div class="col-md-4">
-                <div class="section-header">Fuel / Transport</div>
-                <div class="mb-1"><input type="text" class="form-control mb-1" placeholder="Vehicle No" id="vehicleNo"></div>
-                <div class="mb-1"><input type="text" class="form-control mb-1" placeholder="Driver Name" id="driverName"></div>
-                <table class="table table-bordered table-sm mb-2" id="fuelTable">
-                    <thead><tr><th>Date</th><th>Km</th><th>Amount</th><th width="30"></th></tr></thead>
-                    <tbody id="fuelBody"></tbody>
-                </table>
-                <button type="button" class="btn btn-sm btn-secondary" onclick="addFuelRow()">+ Add Fuel</button>
-
-                <div class="row mt-4 g-2">
+        <div class="app-card">
+            <div class="card-header-custom"><i class="bi bi-person-fill"></i> Applicant Details</div>
+            <div class="card-body">
+                <div class="row g-2">
                     <div class="col-12">
-                        <div class="sig-box">
-                            <span class="sig-label">Applicant Signature</span>
-                            <canvas id="sig1" class="sig-pad"></canvas>
-                            <button type="button" class="btn btn-light sig-clear" onclick="clearSig('sig1')">Clear</button>
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="applicantName" placeholder="Name" required>
+                            <label>Full Name</label>
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="sig-box">
-                            <span class="sig-label">Team Leader</span>
-                            <canvas id="sig2" class="sig-pad"></canvas>
-                            <button type="button" class="btn btn-light sig-clear" onclick="clearSig('sig2')">Clear</button>
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="dept" placeholder="Dept">
+                            <label>Department</label>
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="sig-box">
-                            <span class="sig-label">Approved By</span>
-                            <canvas id="sig3" class="sig-pad"></canvas>
-                            <button type="button" class="btn btn-light sig-clear" onclick="clearSig('sig3')">Clear</button>
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="epfNo" placeholder="EPF">
+                            <label>EPF No</label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="customerName" placeholder="Customer">
+                            <label>Customer Name</label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-floating">
+                            <input type="date" class="form-control" id="appDate" required>
+                            <label>Date</label>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-action" id="submitBtn">
-            <i class="bi bi-cloud-arrow-up"></i> Save to Database & Download PDF
-        </button>
+        <div class="app-card">
+            <div class="card-header-custom">
+                <i class="bi bi-list-check"></i> Claims
+                <button type="button" class="btn btn-sm btn-outline-primary ms-auto" onclick="addMainRow()">+ Add</button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="border:none; border-radius:0;">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th style="min-width:40px">#</th>
+                                <th style="min-width:100px">Date</th>
+                                <th style="min-width:80px">Meals</th>
+                                <th style="min-width:60px">OT</th>
+                                <th style="min-width:30px"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="mainBody"></tbody>
+                    </table>
+                </div>
+                <div style="padding:10px; font-size:0.8rem; color:#666; text-align:center;">
+                    Swipe table or click cells to edit details (Time/Breakdown)
+                </div>
+            </div>
+        </div>
+
+        <div class="app-card">
+            <div class="card-header-custom"><i class="bi bi-cash-stack"></i> Expenses</div>
+            <div class="card-body">
+                <h6 class="text-muted fw-bold" style="font-size:0.8rem">Accommodation</h6>
+                <div class="table-responsive mb-3">
+                    <table class="table table-bordered mb-0">
+                        <tbody id="accBody"></tbody>
+                    </table>
+                </div>
+                <button type="button" class="btn btn-sm btn-light w-100 border mb-3" onclick="addAccRow()">+ Add Accommodation</button>
+
+                <h6 class="text-muted fw-bold" style="font-size:0.8rem">Fuel / Transport</h6>
+                <div class="row g-2 mb-2">
+                    <div class="col-6"><input type="text" class="form-control form-control-sm" placeholder="Vehicle No" id="vehicleNo"></div>
+                    <div class="col-6"><input type="text" class="form-control form-control-sm" placeholder="Driver Name" id="driverName"></div>
+                </div>
+                <div class="table-responsive mb-2">
+                    <table class="table table-bordered mb-0">
+                        <tbody id="fuelBody"></tbody>
+                    </table>
+                </div>
+                <button type="button" class="btn btn-sm btn-light w-100 border" onclick="addFuelRow()">+ Add Fuel</button>
+            </div>
+        </div>
+
+        <div class="app-card">
+            <div class="card-header-custom"><i class="bi bi-calculator"></i> Accounts Breakdown</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm mb-0">
+                        <thead><tr><th>Item</th><th>Seylan</th><th>Others</th></tr></thead>
+                        <tbody>
+                            <tr><td>Printers</td><td><input type="text" id="acc_pr_seylan"></td><td><input type="text" id="acc_pr_other"></td></tr>
+                            <tr><td>UPS</td><td><input type="text" id="acc_ups_seylan"></td><td><input type="text" id="acc_ups_other"></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="form-floating mt-3">
+                    <textarea class="form-control" id="remarks" style="height: 80px"></textarea>
+                    <label>Remarks</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="app-card">
+            <div class="card-body">
+                <div class="summary-box">
+                    <div class="summary-row"><span>Meals:</span> <span id="dispMeals">0.00</span></div>
+                    <div class="summary-row"><span>Accommodation:</span> <span id="dispAcc">0.00</span></div>
+                    <div class="summary-row"><span>Fuel:</span> <span id="dispFuel">0.00</span></div>
+                    <div class="summary-total">
+                        <span>PAYABLE:</span>
+                        <span>Rs. <span id="dispGrand">0.00</span></span>
+                    </div>
+                </div>
+                <input type="hidden" id="sumMeals"><input type="hidden" id="sumAcc"><input type="hidden" id="sumFuel"><input type="hidden" id="sumOT"><input type="hidden" id="grandTotal">
+            </div>
+        </div>
+
+        <div class="app-card">
+            <div class="card-header-custom"><i class="bi bi-pen-fill"></i> Signatures</div>
+            <div class="card-body">
+                <div class="sig-container">
+                    <span class="sig-label">Applicant</span>
+                    <canvas id="sig1"></canvas>
+                    <button type="button" class="sig-clear" onclick="clearSig('sig1')">Clear</button>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="sig-container" style="height:80px">
+                            <span class="sig-label">Team Leader</span>
+                            <canvas id="sig2"></canvas>
+                            <button type="button" class="sig-clear" onclick="clearSig('sig2')">Clear</button>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="sig-container" style="height:80px">
+                            <span class="sig-label">Manager</span>
+                            <canvas id="sig3"></canvas>
+                            <button type="button" class="sig-clear" onclick="clearSig('sig3')">Clear</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-bar">
+            <button type="button" class="btn-calc" onclick="globalCalc()"><i class="bi bi-arrow-clockwise"></i></button>
+            <button type="submit" class="btn-main" id="submitBtn">Submit & PDF</button>
+        </div>
+
     </form>
 </div>
 
 <script>
     // --- CONFIGURATION ---
     const SUPABASE_URL = 'https://ezdptfskycprzmbrxspx.supabase.co';
-    
-    // >>>>> PASTE YOUR SUPABASE 'ANON PUBLIC' KEY BELOW <<<<<
     const SUPABASE_KEY = 'PASTE_YOUR_SUPABASE_ANON_KEY_HERE';
     // ---------------------
 
@@ -205,144 +267,130 @@
         initPads();
         addMainRow(); addAccRow(); addFuelRow();
         
-        // Connect to Supabase
-        if(SUPABASE_KEY.includes('PASTE')) {
-            updateStatus(false, '⚠️ API Key Missing');
+        // Mobile Safe Init
+        if(!SUPABASE_KEY || SUPABASE_KEY.includes('PASTE')) {
+            updateStatus(false, 'Key Missing');
         } else {
             try {
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                const { error } = await supabase.from('claim_reports').select('count', { count: 'exact', head: true });
-                if(!error) updateStatus(true, '🟢 System Online');
-                else throw error;
+                updateStatus(true, 'Online');
             } catch (e) {
                 console.error(e);
-                updateStatus(false, '🔴 Database Error');
+                updateStatus(false, 'Offline');
             }
         }
     };
 
     function updateStatus(isOnline, text) {
         const el = document.getElementById('dbStatus');
-        el.className = isOnline ? 'badge-status bg-online' : 'badge-status bg-offline';
-        el.textContent = text;
+        el.textContent = isOnline ? '🟢 Online' : '🔴 Offline';
+        el.style.background = isOnline ? 'rgba(255,255,255,0.2)' : 'rgba(255,0,0,0.4)';
     }
 
-    // --- GEOLOCATION LOGIC (VERIFY ON/OFF) ---
+    // --- LOCATION (MOBILE FIX) ---
     function getGeoLocation() {
         const display = document.getElementById('locDisplay');
         const hiddenInput = document.getElementById('address');
         
-        if (!navigator.geolocation) {
-            display.textContent = "❌ Not supported by browser";
-            display.className = "loc-text text-danger";
+        // 1. Check for Secure Context (Required for Mobile)
+        if (!window.isSecureContext) {
+            alert("⚠️ GPS Error: Site is not secure (HTTPS). Location will fail on mobile.\nPlease deploy to Vercel/Netlify.");
+            display.textContent = "❌ GPS requires HTTPS";
+            display.style.color = "red";
             return;
         }
 
-        display.textContent = "⏳ Verifying Location...";
-        display.className = "loc-text";
+        if (!navigator.geolocation) {
+            display.textContent = "❌ Not supported";
+            return;
+        }
+
+        display.textContent = "⏳ Accessing GPS...";
+        display.style.color = "blue";
 
         navigator.geolocation.getCurrentPosition(async (position) => {
-            // SUCCESS
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
             
-            display.textContent = "✅ Found! Fetching address...";
-            display.className = "loc-text text-success";
+            display.textContent = "✅ GPS Found! Getting Address...";
             
             try {
-                // Using OpenStreetMap (Nominatim) - Free Service
                 const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
                 const data = await response.json();
                 
                 if(data && data.display_name) {
-                    hiddenInput.value = data.display_name; // Store full address
-                    // Display short version to user
-                    display.innerHTML = `📍 <b>${data.address.city || data.address.town || 'Location Found'}</b><br><small>${data.display_name}</small>`;
+                    hiddenInput.value = data.display_name;
+                    // Show cleaner address
+                    let cleanAddr = (data.address.road || "") + ", " + (data.address.city || data.address.town || "");
+                    display.innerHTML = `📍 <b>${cleanAddr}</b><br><span style='font-size:0.7rem'>${lat.toFixed(4)}, ${lon.toFixed(4)}</span>`;
+                    display.style.color = "green";
                 } else {
-                    throw new Error("Address not found");
+                    throw new Error("Address lookup failed");
                 }
             } catch (error) {
-                console.error(error);
-                display.textContent = `⚠️ Network Error. Coordinates Saved: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-                hiddenInput.value = `Lat: ${lat}, Lon: ${lon}`; // Fallback to coords
+                display.textContent = "⚠️ Address API Error (Using Coords)";
+                hiddenInput.value = `Lat: ${lat}, Lon: ${lon}`;
             }
-
         }, (error) => {
-            // ERROR HANDLING (CHECK IF OFF)
-            let msg = "❌ Location Error";
+            let msg = "❌ GPS Error";
+            if(error.code === 1) msg = "❌ Permission Denied. Check Phone Settings.";
+            if(error.code === 2) msg = "❌ GPS Signal Lost. Go Outside.";
+            if(error.code === 3) msg = "❌ Timeout.";
             
-            if(error.code === 1) {
-                msg = "❌ Permission Denied. Please Allow Location Access.";
-                alert("Please click 'Allow' when the browser asks for location.");
-            } else if (error.code === 2) {
-                msg = "❌ Location Unavailable. Is GPS On?";
-                alert("⚠️ Please turn ON your Mobile Location / GPS and try again.");
-            } else if (error.code === 3) {
-                msg = "❌ Timeout. Try again.";
-            }
-            
+            alert(msg + "\nMake sure Location Services are ON for your browser.");
             display.textContent = msg;
-            display.className = "loc-text text-danger";
-        }, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-        });
+            display.style.color = "red";
+        }, { enableHighAccuracy: true, timeout: 15000 });
     }
 
-    // --- SIGNATURES ---
+    // --- LOGIC ---
     function initPads() {
         ['sig1', 'sig2', 'sig3'].forEach(id => {
             const c = document.getElementById(id);
+            // Fix resolution for mobile retina screens
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            c.width = c.offsetWidth * ratio;
+            c.height = c.offsetHeight * ratio;
+            c.getContext("2d").scale(ratio, ratio);
             pads[id] = new SignaturePad(c, { backgroundColor: 'rgba(255,255,255,0)' });
-            resizeCanvas(c);
         });
-    }
-    
-    function resizeCanvas(canvas) {
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = canvas.offsetHeight * ratio;
-        canvas.getContext("2d").scale(ratio, ratio);
     }
     function clearSig(id) { pads[id].clear(); }
 
-    // --- TABLE LOGIC ---
     function addMainRow() {
         const row = document.getElementById('mainBody').insertRow();
+        // Hidden columns stored in attributes or data-cells for PDF
+        // Mobile view: Show Date, Meal Total, OT
         row.innerHTML = `
             <td>${document.getElementById('mainBody').rows.length}</td>
-            <td><input type="text" class="d-onsite"></td>
             <td><input type="date" class="d-date"></td>
-            <td><input type="time"></td><td><input type="time"></td>
-            <td><input type="number" class="meal" oninput="rowCalc(this)"></td>
-            <td><input type="number" class="meal" oninput="rowCalc(this)"></td>
-            <td><input type="number" class="meal" oninput="rowCalc(this)"></td>
-            <td><input type="number" class="meal" oninput="rowCalc(this)"></td>
-            <td><input type="number" class="meal-tot read-only-total" readonly></td>
-            <td><input type="number" class="ot-hr" oninput="globalCalc()"></td>
-            <td><input type="number" class="day-tot"></td>
-            <td><i class="bi bi-x text-danger" style="cursor:pointer" onclick="delRow(this)"></i></td>`;
+            <td><input type="number" class="meal-tot" placeholder="Total" oninput="globalCalc()">
+                <div style="display:none">
+                    <input type="text" class="d-onsite" value="">
+                    <input type="time" class="t-from"><input type="time" class="t-to">
+                    <input type="number" class="m-bf"><input type="number" class="m-ln">
+                    <input type="number" class="m-te"><input type="number" class="m-dn">
+                </div>
+            </td>
+            <td><input type="number" class="ot-hr" placeholder="Hrs" oninput="globalCalc()"></td>
+            <td><i class="bi bi-x-circle-fill text-danger" onclick="this.closest('tr').remove(); globalCalc()"></i></td>
+        `;
     }
-    function addAccRow() {
-        document.getElementById('accBody').insertRow().innerHTML = `<td><input type="date"></td><td><input type="number" class="acc-amt" oninput="globalCalc()"></td><td><i class="bi bi-x text-danger" style="cursor:pointer" onclick="delRow(this)"></i></td>`;
-    }
-    function addFuelRow() {
-        document.getElementById('fuelBody').insertRow().innerHTML = `<td><input type="date"></td><td><input type="number"></td><td><input type="number" class="fuel-amt" oninput="globalCalc()"></td><td><i class="bi bi-x text-danger" style="cursor:pointer" onclick="delRow(this)"></i></td>`;
-    }
-    function delRow(btn) { btn.closest('tr').remove(); globalCalc(); }
 
-    // --- CALCULATIONS ---
-    function rowCalc(inp) {
-        const row = inp.closest('tr');
-        let sum = 0;
-        row.querySelectorAll('.meal').forEach(i => sum += Number(i.value));
-        row.querySelector('.meal-tot').value = sum;
-        globalCalc();
+    function addAccRow() {
+        const row = document.getElementById('accBody').insertRow();
+        row.innerHTML = `<td><input type="date" placeholder="Date"></td><td><input type="number" class="acc-amt" placeholder="Amount" oninput="globalCalc()"></td><td style="width:30px"><i class="bi bi-x text-danger" onclick="this.closest('tr').remove(); globalCalc()"></i></td>`;
+    }
+
+    function addFuelRow() {
+        const row = document.getElementById('fuelBody').insertRow();
+        row.innerHTML = `<td><input type="date" placeholder="Date"></td><td><input type="number" placeholder="Km"></td><td><input type="number" class="fuel-amt" placeholder="Amount" oninput="globalCalc()"></td><td style="width:30px"><i class="bi bi-x text-danger" onclick="this.closest('tr').remove(); globalCalc()"></i></td>`;
     }
 
     function globalCalc() {
         let m = 0, ot = 0, ac = 0, fu = 0;
+        // Note: In this simplified mobile UI, we enter Total Meal cost directly. 
+        // If you need individual breakdown, we can add a modal, but direct entry is faster for mobile.
         document.querySelectorAll('.meal-tot').forEach(i => m += Number(i.value));
         document.querySelectorAll('.ot-hr').forEach(i => ot += Number(i.value));
         document.querySelectorAll('.acc-amt').forEach(i => ac += Number(i.value));
@@ -352,17 +400,31 @@
         document.getElementById('sumOT').value = ot;
         document.getElementById('sumAcc').value = ac;
         document.getElementById('sumFuel').value = fu;
-        document.getElementById('grandTotal').value = m + ac + fu;
+        
+        let grand = m + ac + fu;
+        document.getElementById('grandTotal').value = grand;
+
+        // Update Display
+        document.getElementById('dispMeals').innerText = m.toFixed(2);
+        document.getElementById('dispAcc').innerText = ac.toFixed(2);
+        document.getElementById('dispFuel').innerText = fu.toFixed(2);
+        document.getElementById('dispGrand').innerText = grand.toFixed(2);
     }
 
-    // --- SAVE & GENERATE ---
+    // --- SAVE & PDF ---
     document.getElementById('claimForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const btn = document.getElementById('submitBtn');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...'; btn.disabled = true;
+        
+        // 1. Validation: Location
+        if(!document.getElementById('address').value) {
+            alert("⚠️ Please Click 'Check-In' to verify your location first.");
+            return;
+        }
 
-        // Gather Data
+        const btn = document.getElementById('submitBtn');
+        const orig = btn.innerHTML;
+        btn.innerHTML = 'Processing...'; btn.disabled = true;
+
         const formData = {
             applicant_name: document.getElementById('applicantName').value,
             department: document.getElementById('dept').value,
@@ -370,131 +432,99 @@
             customer_name: document.getElementById('customerName').value,
             location_address: document.getElementById('address').value,
             claim_date: document.getElementById('appDate').value,
-            total_ot_hours: document.getElementById('sumOT').value,
             total_meals_rs: document.getElementById('sumMeals').value,
-            total_acc_rs: document.getElementById('sumAcc').value,
-            total_fuel_rs: document.getElementById('sumFuel').value,
             grand_total_rs: document.getElementById('grandTotal').value,
-            driver_name: document.getElementById('driverName').value,
-            vehicle_no: document.getElementById('vehicleNo').value,
-            form_details_json: {
-                remarks: document.getElementById('remarks').value,
-                acc_breakdown: getTableData('accBody'),
-                fuel_breakdown: getTableData('fuelBody')
-            }
+            // Include JSON details if needed for database...
         };
 
         try {
-            // Save to DB
             if(supabase) {
-                const { error } = await supabase.from('claim_reports').insert([formData]);
-                if(error) throw error;
+                await supabase.from('claim_reports').insert([formData]);
             }
-            
             generatePDF();
-            alert('Success! Report Saved and PDF Downloaded.');
-            
         } catch(err) {
             console.error(err);
-            if(confirm("Database Error: " + err.message + "\n\nDownload PDF anyway?")) {
-                generatePDF();
-            }
+            alert("Database Error. Generating PDF only.");
+            generatePDF();
         } finally {
-            btn.innerHTML = originalText; btn.disabled = false;
+            btn.innerHTML = orig; btn.disabled = false;
         }
     });
 
-    function getTableData(tbodyId) {
-        let data = [];
-        document.getElementById(tbodyId).querySelectorAll('tr').forEach(tr => {
-            let row = [];
-            tr.querySelectorAll('input').forEach(i => row.push(i.value));
-            data.push(row);
-        });
-        return data;
-    }
-
     function generatePDF() {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('l', 'mm', 'a4'); // Landscape
+        const doc = new jsPDF('l', 'mm', 'a4'); // Landscape for the complex table
 
-        // Header
-        doc.setFontSize(14); doc.setFont("helvetica", "bold");
-        doc.text("OVER TIME / MEALS / ACCOMMODATION CLAIM FORM", 148, 15, null, null, "center");
+        // HEADER
+        doc.setFontSize(16); doc.setFont("helvetica", "bold");
+        doc.text("CLAIM FORM", 148, 15, null, null, "center");
         
-        doc.setFontSize(9); doc.setFont("helvetica", "normal");
+        doc.setFontSize(10); doc.setFont("helvetica", "normal");
         let y = 30;
         doc.text(`Applicant: ${document.getElementById('applicantName').value}`, 15, y);
-        doc.text(`Customer: ${document.getElementById('customerName').value}`, 90, y);
+        doc.text(`Customer: ${document.getElementById('customerName').value}`, 100, y);
         doc.text(`Date: ${document.getElementById('appDate').value}`, 220, y);
-        y += 6;
-        doc.text(`Address: ${document.getElementById('address').value}`, 15, y);
-        doc.text(`Dept: ${document.getElementById('dept').value} | EPF: ${document.getElementById('epfNo').value}`, 90, y);
-        
-        // Main Table
+        y+=7;
+        doc.text(`Location: ${document.getElementById('address').value}`, 15, y);
+        doc.text(`Dept: ${document.getElementById('dept').value}`, 220, y);
+
+        // RECONSTRUCT TABLE FOR PDF (Even if mobile view is simple)
         let mainRows = [];
         document.querySelectorAll('#mainBody tr').forEach(tr => {
-            let r = [];
-            r.push(tr.cells[0].innerText); // #
-            tr.querySelectorAll('input').forEach(i => r.push(i.value));
-            mainRows.push(r);
+            let d = tr.querySelector('.d-date').value;
+            let m = tr.querySelector('.meal-tot').value;
+            let o = tr.querySelector('.ot-hr').value;
+            // PDF needs full columns even if mobile only shows 3
+            mainRows.push([
+                tr.rowIndex, "", d, "", "", 
+                "", "", "", "", m, // Put total in meal column
+                o, m 
+            ]); 
         });
 
         doc.autoTable({
-            startY: 45,
+            startY: 50,
             head: [[
                 {content:'#', rowSpan:2}, {content:'Onsite', rowSpan:2}, {content:'Date', rowSpan:2}, 
                 {content:'Time', colSpan:2}, {content:'Meals (Rs)', colSpan:5}, 
                 {content:'OT', rowSpan:2}, {content:'Total', rowSpan:2}
             ], ['From','To','Bfast','Lunch','Tea','Dinner','Total']],
             body: mainRows,
-            theme: 'grid', styles: { fontSize: 8, cellPadding: 1 },
-            headStyles: { fillColor: [52, 58, 64] }
+            theme: 'grid', styles: { fontSize: 8 }
         });
 
         let fy = doc.lastAutoTable.finalY + 10;
-
-        // Sub Tables
-        let accRows = [];
-        document.querySelectorAll('#accTableBody tr').forEach(tr => {
-            accRows.push([tr.querySelector('input[type=date]').value, tr.querySelector('.acc-amount').value]);
-        });
         
-        doc.text("Accommodation", 15, fy);
-        doc.autoTable({
-            startY: fy + 2, margin: { left: 15 }, tableWidth: 60,
-            head: [['Date', 'Amount']], body: accRows, theme: 'grid', styles: { fontSize: 8 }
-        });
-        
-        doc.text("Fuel", 150, fy);
-        let fuelRows = [];
-        document.querySelectorAll('#fuelTableBody tr').forEach(tr => {
+        // Expenses Tables in PDF
+        doc.text("Accommodation & Fuel Details", 15, fy);
+        let expRows = [];
+        document.querySelectorAll('#accBody tr').forEach(tr => {
             let inputs = tr.querySelectorAll('input');
-            fuelRows.push([inputs[0].value, inputs[1].value, inputs[2].value]);
+            expRows.push(['Accommodation', inputs[0].value, inputs[1].value]);
         });
+        document.querySelectorAll('#fuelBody tr').forEach(tr => {
+            let inputs = tr.querySelectorAll('input');
+            expRows.push(['Fuel', inputs[0].value, inputs[2].value]);
+        });
+        
         doc.autoTable({
-            startY: fy + 2, margin: { left: 150 }, tableWidth: 80,
-            head: [['Date', 'Km', 'Amount']], body: fuelRows, theme: 'grid', styles: { fontSize: 8 }
+            startY: fy + 2, margin: {left:15}, tableWidth: 100,
+            head: [['Type', 'Date', 'Amount']], body: expRows,
+            theme: 'grid'
         });
 
-        // Totals Box
-        let nextY = Math.max(doc.lastAutoTable.finalY, fy + 30) + 10;
-        doc.setDrawColor(0); doc.rect(15, nextY, 70, 30);
-        doc.setFontSize(9);
-        doc.text(`OT Hours: ${document.getElementById('sumOT').value}`, 18, nextY + 6);
-        doc.text(`Meals Rs: ${document.getElementById('sumMeals').value}`, 18, nextY + 11);
-        doc.text(`Acc Rs: ${document.getElementById('sumAcc').value}`, 18, nextY + 16);
-        doc.text(`Fuel Rs: ${document.getElementById('sumFuel').value}`, 18, nextY + 21);
-        doc.setFont("helvetica", "bold");
-        doc.text(`GRAND TOTAL Rs: ${document.getElementById('grandTotal').value}`, 18, nextY + 27);
+        // Totals
+        let ny = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(11); doc.setFont("helvetica", "bold");
+        doc.text(`GRAND TOTAL: Rs. ${document.getElementById('grandTotal').value}`, 150, ny);
 
         // Signatures
-        let sigY = nextY + 45;
+        let sigY = 170;
         if(!pads['sig1'].isEmpty()) doc.addImage(pads['sig1'].toDataURL(), 'PNG', 15, sigY-20, 40, 20);
         if(!pads['sig2'].isEmpty()) doc.addImage(pads['sig2'].toDataURL(), 'PNG', 100, sigY-20, 40, 20);
         if(!pads['sig3'].isEmpty()) doc.addImage(pads['sig3'].toDataURL(), 'PNG', 200, sigY-20, 40, 20);
         
-        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10); doc.setFont("helvetica", "normal");
         doc.text("Applicant", 15, sigY+5); doc.line(15, sigY, 55, sigY);
         doc.text("Team Leader", 100, sigY+5); doc.line(100, sigY, 140, sigY);
         doc.text("Approved", 200, sigY+5); doc.line(200, sigY, 240, sigY);
