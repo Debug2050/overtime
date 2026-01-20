@@ -3,469 +3,487 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claim Form Generator</title>
+    <title>Overtime & Claim Form</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        body { font-family: 'Roboto', sans-serif; background-color: #f0f2f5; padding: 20px; font-size: 14px; }
+        body { font-family: 'Roboto', sans-serif; background-color: #f4f6f9; padding: 20px; font-size: 13px; }
         .container { background: white; max-width: 1400px; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         
-        h3 { text-align: center; font-weight: 700; text-transform: uppercase; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .section-title { background: #e9ecef; padding: 5px 10px; font-weight: bold; margin-bottom: 10px; border-radius: 4px; font-size: 0.9rem; }
+        h4 { text-align: center; font-weight: 700; text-transform: uppercase; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .section-header { background: #e9ecef; padding: 6px 10px; font-weight: bold; margin-top: 15px; border-radius: 4px; font-size: 0.9rem; }
         
-        /* Form Inputs */
-        .form-control { font-size: 0.9rem; padding: 4px 8px; }
-        .form-label { font-weight: 600; font-size: 0.85rem; margin-bottom: 2px; }
+        /* Table Styles */
+        table input { width: 100%; border: 1px solid #dee2e6; text-align: center; padding: 4px; font-size: 13px; border-radius: 3px; }
+        table input:focus { border-color: #80bdff; outline: none; }
+        th { background-color: #f8f9fa; text-align: center; vertical-align: middle; font-size: 12px; font-weight: 600; }
+        td { padding: 2px !important; }
         
-        /* Tables */
-        .table-custom th { background-color: #f8f9fa; font-size: 0.8rem; text-align: center; vertical-align: middle; padding: 5px; }
-        .table-custom td { padding: 3px; }
-        .table-custom input { width: 100%; border: 1px solid #ced4da; text-align: center; padding: 3px; border-radius: 3px; font-size: 0.85rem; }
-        .table-custom input:focus { border-color: #80bdff; outline: 0; }
-        
-        /* Signature Pads */
-        .sig-box { border: 1px solid #ccc; background: #fafafa; position: relative; margin-top: 5px; }
-        .sig-pad { width: 100%; height: 100px; }
-        .sig-btn { position: absolute; bottom: 2px; right: 2px; font-size: 0.7rem; padding: 2px 6px; }
+        /* Signature Styles */
+        .sig-box { border: 1px dashed #ccc; height: 100px; position: relative; background: #fafafa; border-radius: 4px; }
+        .sig-pad { width: 100%; height: 100%; }
+        .sig-clear { position: absolute; bottom: 5px; right: 5px; font-size: 10px; }
+        .sig-label { position: absolute; top: 5px; left: 5px; font-size: 10px; color: #666; font-weight: bold; text-transform: uppercase; }
 
-        /* Calculation Outputs */
         .read-only-total { background-color: #e2e3e5; font-weight: bold; color: #333; }
-
-        /* Grid Layout for Bottom Section */
-        .bottom-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 20px; }
-        @media (max-width: 992px) { .bottom-grid { grid-template-columns: 1fr; } }
+        .btn-action { margin-top: 20px; width: 100%; padding: 12px; font-weight: bold; font-size: 1.1rem; }
         
-        .btn-save { width: 100%; padding: 12px; font-weight: bold; margin-top: 20px; }
+        /* Database Status Badge */
+        .badge-status { position: absolute; top: 20px; right: 20px; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .bg-offline { background-color: #dc3545; }
+        .bg-online { background-color: #28a745; }
+        
+        /* Location Button */
+        .btn-location { border-top-left-radius: 0; border-bottom-left-radius: 0; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h3>Over Time / Meals / Accommodation Claim Form</h3>
+<div class="container position-relative">
+    <div id="dbStatus" class="badge-status bg-offline">Checking System...</div>
+    
+    <h4>Over Time / Meals / Accommodation Claim Form</h4>
     
     <form id="claimForm">
-        <div class="row g-2 mb-3">
+        <div class="row g-2">
             <div class="col-md-3"><label class="form-label">Name of Applicant</label><input type="text" class="form-control" id="applicantName" required></div>
-            <div class="col-md-2"><label class="form-label">Dept</label><input type="text" class="form-control" id="dept"></div>
+            <div class="col-md-2"><label class="form-label">Department</label><input type="text" class="form-control" id="dept"></div>
             <div class="col-md-2"><label class="form-label">EPF No</label><input type="text" class="form-control" id="epfNo"></div>
             <div class="col-md-3"><label class="form-label">Name of Customer</label><input type="text" class="form-control" id="customerName"></div>
             <div class="col-md-2"><label class="form-label">Date</label><input type="date" class="form-control" id="appDate" required></div>
         </div>
-        <div class="row g-2 mb-4">
-            <div class="col-md-6"><label class="form-label">Address</label><input type="text" class="form-control" id="address"></div>
-            <div class="col-md-3 pt-4">
-                <input type="checkbox" id="cityLimit"> <label for="cityLimit">Colombo City Limits</label>
+        
+        <div class="row g-2 mt-2 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label">Location / Address</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="address" placeholder="Enter address or click button ->">
+                    <button class="btn btn-outline-primary btn-location" type="button" onclick="getGeoLocation()">
+                        <i class="bi bi-geo-alt-fill"></i> Get Location
+                    </button>
+                </div>
+                <small id="locStatus" class="text-muted" style="font-size: 11px;"></small>
             </div>
-            <div class="col-md-3 pt-4">
-                <input type="checkbox" id="outStation"> <label for="outStation">O/Station</label>
+            
+            <div class="col-md-6 pb-2">
+                <div class="d-flex gap-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="checkColombo">
+                        <label class="form-check-label" for="checkColombo">Colombo City Limits</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="checkOutstation">
+                        <label class="form-check-label" for="checkOutstation">Outstation</label>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="table-responsive mb-4">
-            <table class="table table-bordered table-custom" id="mainTable">
+        <div class="table-responsive mt-4">
+            <table class="table table-bordered table-sm">
                 <thead>
                     <tr>
-                        <th rowspan="2" width="30">#</th>
+                        <th rowspan="2" width="40">#</th>
                         <th rowspan="2">Onsite Nos</th>
-                        <th rowspan="2">Date</th>
+                        <th rowspan="2" width="110">Date</th>
                         <th colspan="2">Time</th>
-                        <th colspan="5">Meals Entitlement Rs.</th>
-                        <th rowspan="2">Overtime<br>Hours</th>
-                        <th rowspan="2">Total for<br>day Rs.</th>
+                        <th colspan="5">Meals Entitlement (Rs)</th>
+                        <th rowspan="2">OT Hours</th>
+                        <th rowspan="2">Total Day (Rs)</th>
                         <th rowspan="2" width="30"></th>
                     </tr>
                     <tr>
-                        <th>From</th>
-                        <th>To</th>
-                        <th>B'fast</th>
-                        <th>Lunch</th>
-                        <th>Tea</th>
-                        <th>Dinner</th>
-                        <th>Total</th>
+                        <th>From</th><th>To</th><th>B'fast</th><th>Lunch</th><th>Tea</th><th>Dinner</th><th>Total</th>
                     </tr>
                 </thead>
-                <tbody id="mainTableBody"></tbody>
+                <tbody id="mainBody"></tbody>
             </table>
-            <button type="button" class="btn btn-sm btn-success" onclick="addMainRow()">+ Add Line</button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="addMainRow()">+ Add Row</button>
         </div>
 
-        <div class="bottom-grid">
+        <div class="row mt-3">
             
-            <div>
-                <div class="mb-2">
-                    <label class="form-label">Driver:</label> <input type="text" class="form-control d-inline w-75" id="driverName">
-                </div>
-                
-                <div class="section-title">Accommodation</div>
-                <table class="table table-bordered table-custom" id="accTable">
-                    <thead><tr><th>Date</th><th>Charges Rs.</th><th></th></tr></thead>
-                    <tbody id="accTableBody"></tbody>
+            <div class="col-md-4">
+                <div class="section-header">Accommodation</div>
+                <table class="table table-bordered table-sm mb-2" id="accTable">
+                    <thead><tr><th>Date</th><th>Amount Rs.</th><th width="30"></th></tr></thead>
+                    <tbody id="accBody"></tbody>
                 </table>
-                <button type="button" class="btn btn-sm btn-success mb-3" onclick="addAccRow()">+ Add Acc</button>
+                <button type="button" class="btn btn-sm btn-secondary mb-3" onclick="addAccRow()">+ Add Acc</button>
 
-                <div class="section-title mt-2">Total Payable Summary</div>
-                <table class="table table-bordered table-custom">
-                    <tr>
-                        <td>OT Hours (Total)</td>
-                        <td><input type="number" id="sumOTHours" class="read-only-total" readonly></td>
-                    </tr>
-                    <tr>
-                        <td>Meals (Rs)</td>
-                        <td><input type="number" id="sumMeals" class="read-only-total" readonly></td>
-                    </tr>
-                    <tr>
-                        <td>Accommodation (Rs)</td>
-                        <td><input type="number" id="sumAcc" class="read-only-total" readonly></td>
-                    </tr>
-                    <tr>
-                        <td>Fuel (Rs)</td>
-                        <td><input type="number" id="sumFuel" class="read-only-total" readonly></td>
-                    </tr>
-                    <tr style="border: 2px solid #000;">
-                        <td class="fw-bold">GRAND TOTAL (Rs)</td>
-                        <td><input type="number" id="grandTotal" class="read-only-total" style="font-size:1.1rem;" readonly></td>
-                    </tr>
-                </table>
+                <div class="card p-3 bg-light border-0">
+                    <div class="d-flex justify-content-between mb-1"><span>Total OT Hrs:</span> <input type="number" id="sumOT" class="read-only-total form-control form-control-sm w-25" readonly></div>
+                    <div class="d-flex justify-content-between mb-1"><span>Total Meals:</span> <input type="number" id="sumMeals" class="read-only-total form-control form-control-sm w-25" readonly></div>
+                    <div class="d-flex justify-content-between mb-1"><span>Total Acc:</span> <input type="number" id="sumAcc" class="read-only-total form-control form-control-sm w-25" readonly></div>
+                    <div class="d-flex justify-content-between mb-1"><span>Total Fuel:</span> <input type="number" id="sumFuel" class="read-only-total form-control form-control-sm w-25" readonly></div>
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold align-items-center">
+                        <span style="font-size:1.1rem;">GRAND TOTAL:</span> 
+                        <input type="number" id="grandTotal" class="read-only-total form-control w-50" style="font-size:1.2rem; height: 40px;" readonly>
+                    </div>
+                </div>
             </div>
 
-            <div>
-                <div class="mb-2">
-                    <label class="form-label">Vehicle No:</label> <input type="text" class="form-control d-inline w-75" id="vehicleNo">
-                </div>
-
-                <div class="section-title">Summary (for Accounts)</div>
-                <table class="table table-bordered table-custom">
+            <div class="col-md-4">
+                <div class="section-header">Summary (for Accounts)</div>
+                <table class="table table-bordered table-sm">
                     <thead><tr><th>Item</th><th>Seylan</th><th>Others</th></tr></thead>
                     <tbody>
-                        <tr>
-                            <td>Printers</td>
-                            <td><input type="text" id="acc_pr_seylan"></td>
-                            <td><input type="text" id="acc_pr_other"></td>
-                        </tr>
-                        <tr>
-                            <td>UPS</td>
-                            <td><input type="text" id="acc_ups_seylan"></td>
-                            <td><input type="text" id="acc_ups_other"></td>
-                        </tr>
+                        <tr><td>Printers</td><td><input type="text" id="acc_pr_seylan"></td><td><input type="text" id="acc_pr_other"></td></tr>
+                        <tr><td>UPS</td><td><input type="text" id="acc_ups_seylan"></td><td><input type="text" id="acc_ups_other"></td></tr>
                     </tbody>
                 </table>
-
-                <div class="section-title">Remarks</div>
-                <textarea class="form-control" id="remarks" rows="6"></textarea>
+                <label class="mt-2 fw-bold form-label">Remarks:</label>
+                <textarea class="form-control" id="remarks" rows="6" placeholder="Enter remarks here..."></textarea>
             </div>
 
-            <div>
-                <div class="section-title">Fuel</div>
-                <table class="table table-bordered table-custom" id="fuelTable">
-                    <thead><tr><th>Date</th><th>Km</th><th>Amount</th><th></th></tr></thead>
-                    <tbody id="fuelTableBody"></tbody>
+            <div class="col-md-4">
+                <div class="section-header">Fuel / Transport</div>
+                <div class="mb-1"><input type="text" class="form-control mb-1" placeholder="Vehicle No" id="vehicleNo"></div>
+                <div class="mb-1"><input type="text" class="form-control mb-1" placeholder="Driver Name" id="driverName"></div>
+                <table class="table table-bordered table-sm mb-2" id="fuelTable">
+                    <thead><tr><th>Date</th><th>Km</th><th>Amount</th><th width="30"></th></tr></thead>
+                    <tbody id="fuelBody"></tbody>
                 </table>
-                <button type="button" class="btn btn-sm btn-success mb-3" onclick="addFuelRow()">+ Add Fuel</button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="addFuelRow()">+ Add Fuel</button>
 
-                <div class="mt-4">
-                    <label class="form-label">Signature (Applicant)</label>
-                    <div class="sig-box"><canvas id="sigApp" class="sig-pad"></canvas><button type="button" class="btn btn-secondary sig-btn" onclick="clearSig('app')">Clear</button></div>
-                </div>
-                <div class="mt-2">
-                    <label class="form-label">Team Leader</label>
-                    <div class="sig-box"><canvas id="sigLead" class="sig-pad"></canvas><button type="button" class="btn btn-secondary sig-btn" onclick="clearSig('lead')">Clear</button></div>
-                </div>
-                <div class="mt-2">
-                    <label class="form-label">Approved By</label>
-                    <div class="sig-box"><canvas id="sigAppr" class="sig-pad"></canvas><button type="button" class="btn btn-secondary sig-btn" onclick="clearSig('appr')">Clear</button></div>
+                <div class="row mt-4 g-2">
+                    <div class="col-12">
+                        <div class="sig-box">
+                            <span class="sig-label">Applicant Signature</span>
+                            <canvas id="sig1" class="sig-pad"></canvas>
+                            <button type="button" class="btn btn-light sig-clear" onclick="clearSig('sig1')">Clear</button>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="sig-box">
+                            <span class="sig-label">Team Leader</span>
+                            <canvas id="sig2" class="sig-pad"></canvas>
+                            <button type="button" class="btn btn-light sig-clear" onclick="clearSig('sig2')">Clear</button>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="sig-box">
+                            <span class="sig-label">Approved By</span>
+                            <canvas id="sig3" class="sig-pad"></canvas>
+                            <button type="button" class="btn btn-light sig-clear" onclick="clearSig('sig3')">Clear</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-save" id="submitBtn">
-            <i class="bi bi-cloud-arrow-up"></i> Save & Download PDF
+        <button type="submit" class="btn btn-primary btn-action" id="submitBtn">
+            <i class="bi bi-cloud-arrow-up"></i> Save to Database & Download PDF
         </button>
-        <div id="statusMessage" class="mt-2 text-center fw-bold" style="display:none;"></div>
     </form>
 </div>
 
 <script>
-    // --- SETUP ---
-    // PASTE SHEETDB URL HERE
-    const SHEETDB_URL = 'https://sheetdb.io/api/v1/4euspki4y2hqt';
-    // -------------
+    // --- CONFIGURATION ---
+    const SUPABASE_URL = 'https://ezdptfskycprzmbrxspx.supabase.co';
+    
+    // >>>>> PASTE YOUR SUPABASE 'ANON PUBLIC' KEY BELOW <<<<<
+    const SUPABASE_KEY = 'PASTE_YOUR_SUPABASE_ANON_KEY_HERE';
+    // ---------------------
 
+    let supabase;
     let pads = {};
 
-    window.onload = function() {
+    window.onload = async function() {
+        // Set default date
         document.getElementById('appDate').valueAsDate = new Date();
+        
+        // Initialize systems
         initPads();
-        addMainRow(); // Init with 1 row
-        addAccRow();
+        addMainRow(); 
+        addAccRow(); 
         addFuelRow();
+        
+        // Connect to Supabase
+        if(SUPABASE_KEY.includes('PASTE')) {
+            updateStatus(false, '⚠️ API Key Missing');
+        } else {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                const { error } = await supabase.from('claim_reports').select('count', { count: 'exact', head: true });
+                if(!error) updateStatus(true, '🟢 System Online');
+                else throw error;
+            } catch (e) {
+                console.error(e);
+                updateStatus(false, '🔴 Database Error');
+            }
+        }
     };
 
-    function initPads() {
-        ['sigApp', 'sigLead', 'sigAppr'].forEach(id => {
-            const canvas = document.getElementById(id);
-            pads[id] = new SignaturePad(canvas, { backgroundColor: 'rgba(255, 255, 255, 0)' });
-            resizeCanvas(canvas);
+    function updateStatus(isOnline, text) {
+        const el = document.getElementById('dbStatus');
+        el.className = isOnline ? 'badge-status bg-online' : 'badge-status bg-offline';
+        el.textContent = text;
+    }
+
+    // --- GEOLOCATION LOGIC ---
+    function getGeoLocation() {
+        const status = document.getElementById('locStatus');
+        const addrInput = document.getElementById('address');
+        
+        if (!navigator.geolocation) {
+            status.textContent = "Geolocation not supported";
+            return;
+        }
+
+        status.textContent = "⏳ Locating...";
+        status.style.color = "blue";
+
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            status.textContent = "Found coordinates. Fetching address...";
+            
+            try {
+                // Use OpenStreetMap (Nominatim) - Free Service
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                const data = await response.json();
+                
+                if(data && data.display_name) {
+                    addrInput.value = data.display_name;
+                    status.textContent = "✅ Location Updated";
+                    status.style.color = "green";
+                } else {
+                    throw new Error("Address not found");
+                }
+            } catch (error) {
+                console.error(error);
+                status.textContent = `⚠️ Network Error. Coordinates: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                status.style.color = "orange";
+                addrInput.value = `Lat: ${lat}, Lon: ${lon}`;
+            }
+
+        }, (error) => {
+            status.textContent = "❌ Permission Denied or Error";
+            status.style.color = "red";
         });
     }
 
+    // --- SIGNATURES ---
+    function initPads() {
+        ['sig1', 'sig2', 'sig3'].forEach(id => {
+            const c = document.getElementById(id);
+            pads[id] = new SignaturePad(c, { backgroundColor: 'rgba(255,255,255,0)' });
+            resizeCanvas(c);
+        });
+    }
+    
     function resizeCanvas(canvas) {
         const ratio = Math.max(window.devicePixelRatio || 1, 1);
         canvas.width = canvas.offsetWidth * ratio;
         canvas.height = canvas.offsetHeight * ratio;
         canvas.getContext("2d").scale(ratio, ratio);
     }
-    
-    function clearSig(type) {
-        if(type === 'app') pads['sigApp'].clear();
-        if(type === 'lead') pads['sigLead'].clear();
-        if(type === 'appr') pads['sigAppr'].clear();
-    }
+    function clearSig(id) { pads[id].clear(); }
 
-    // --- Table Logic ---
-
+    // --- TABLE LOGIC ---
     function addMainRow() {
-        const tbody = document.getElementById('mainTableBody');
-        const row = tbody.insertRow();
+        const row = document.getElementById('mainBody').insertRow();
         row.innerHTML = `
-            <td class="text-center">${tbody.rows.length}</td>
-            <td><input type="text"></td>
-            <td><input type="date"></td>
-            <td><input type="time"></td>
-            <td><input type="time"></td>
-            <td><input type="number" class="meal-item" placeholder="0" oninput="calcRow(this)"></td>
-            <td><input type="number" class="meal-item" placeholder="0" oninput="calcRow(this)"></td>
-            <td><input type="number" class="meal-item" placeholder="0" oninput="calcRow(this)"></td>
-            <td><input type="number" class="meal-item" placeholder="0" oninput="calcRow(this)"></td>
-            <td><input type="number" class="meal-total read-only-total" readonly></td>
-            <td><input type="number" class="ot-hours" placeholder="0" oninput="calcAll()"></td>
-            <td><input type="number" class="day-total" placeholder="0"></td> <td class="text-center"><i class="bi bi-trash text-danger" style="cursor:pointer" onclick="delRow(this)"></i></td>
-        `;
+            <td>${document.getElementById('mainBody').rows.length}</td>
+            <td><input type="text" class="d-onsite"></td>
+            <td><input type="date" class="d-date"></td>
+            <td><input type="time"></td><td><input type="time"></td>
+            <td><input type="number" class="meal" oninput="rowCalc(this)"></td>
+            <td><input type="number" class="meal" oninput="rowCalc(this)"></td>
+            <td><input type="number" class="meal" oninput="rowCalc(this)"></td>
+            <td><input type="number" class="meal" oninput="rowCalc(this)"></td>
+            <td><input type="number" class="meal-tot read-only-total" readonly></td>
+            <td><input type="number" class="ot-hr" oninput="globalCalc()"></td>
+            <td><input type="number" class="day-tot"></td>
+            <td><i class="bi bi-x text-danger" style="cursor:pointer" onclick="delRow(this)"></i></td>`;
     }
-
     function addAccRow() {
-        const row = document.getElementById('accTableBody').insertRow();
-        row.innerHTML = `<td><input type="date"></td><td><input type="number" class="acc-amount" oninput="calcAll()"></td><td class="text-center"><i class="bi bi-trash text-danger" onclick="delRow(this)"></i></td>`;
+        document.getElementById('accBody').insertRow().innerHTML = `<td><input type="date"></td><td><input type="number" class="acc-amt" oninput="globalCalc()"></td><td><i class="bi bi-x text-danger" style="cursor:pointer" onclick="delRow(this)"></i></td>`;
     }
-
     function addFuelRow() {
-        const row = document.getElementById('fuelTableBody').insertRow();
-        row.innerHTML = `<td><input type="date"></td><td><input type="number"></td><td><input type="number" class="fuel-amount" oninput="calcAll()"></td><td class="text-center"><i class="bi bi-trash text-danger" onclick="delRow(this)"></i></td>`;
+        document.getElementById('fuelBody').insertRow().innerHTML = `<td><input type="date"></td><td><input type="number"></td><td><input type="number" class="fuel-amt" oninput="globalCalc()"></td><td><i class="bi bi-x text-danger" style="cursor:pointer" onclick="delRow(this)"></i></td>`;
     }
+    function delRow(btn) { btn.closest('tr').remove(); globalCalc(); }
 
-    function delRow(btn) {
-        btn.closest('tr').remove();
-        calcAll();
-    }
-
-    // --- Calculations ---
-
-    function calcRow(input) {
-        const row = input.closest('tr');
+    // --- CALCULATIONS ---
+    function rowCalc(inp) {
+        const row = inp.closest('tr');
         let sum = 0;
-        row.querySelectorAll('.meal-item').forEach(i => sum += Number(i.value));
-        row.querySelector('.meal-total').value = sum;
-        calcAll();
+        row.querySelectorAll('.meal').forEach(i => sum += Number(i.value));
+        row.querySelector('.meal-tot').value = sum;
+        globalCalc();
     }
 
-    function calcAll() {
-        // 1. Sum Meals
-        let totalMeals = 0;
-        document.querySelectorAll('.meal-total').forEach(i => totalMeals += Number(i.value));
-        document.getElementById('sumMeals').value = totalMeals;
+    function globalCalc() {
+        let m = 0, ot = 0, ac = 0, fu = 0;
+        document.querySelectorAll('.meal-tot').forEach(i => m += Number(i.value));
+        document.querySelectorAll('.ot-hr').forEach(i => ot += Number(i.value));
+        document.querySelectorAll('.acc-amt').forEach(i => ac += Number(i.value));
+        document.querySelectorAll('.fuel-amt').forEach(i => fu += Number(i.value));
 
-        // 2. Sum OT Hours
-        let totalOT = 0;
-        document.querySelectorAll('.ot-hours').forEach(i => totalOT += Number(i.value));
-        document.getElementById('sumOTHours').value = totalOT;
-
-        // 3. Sum Accommodation
-        let totalAcc = 0;
-        document.querySelectorAll('.acc-amount').forEach(i => totalAcc += Number(i.value));
-        document.getElementById('sumAcc').value = totalAcc;
-
-        // 4. Sum Fuel
-        let totalFuel = 0;
-        document.querySelectorAll('.fuel-amount').forEach(i => totalFuel += Number(i.value));
-        document.getElementById('sumFuel').value = totalFuel;
-
-        // 5. Grand Total (Sum of Meals + Acc + Fuel + DayTotals? 
-        // Note: The form is tricky. Usually "Total for day" is just info. 
-        // The payable is Meals + Acc + Fuel. But what about OT value?
-        // Since there is no Rate, I will sum: Meals + Acc + Fuel. 
-        // *User can manually override Grand Total if needed.*
-        document.getElementById('grandTotal').value = totalMeals + totalAcc + totalFuel;
+        document.getElementById('sumMeals').value = m;
+        document.getElementById('sumOT').value = ot;
+        document.getElementById('sumAcc').value = ac;
+        document.getElementById('sumFuel').value = fu;
+        document.getElementById('grandTotal').value = m + ac + fu;
     }
 
-    // --- Submission ---
-
+    // --- SAVE & GENERATE ---
     document.getElementById('claimForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const btn = document.getElementById('submitBtn');
-        const origText = btn.innerHTML;
-        btn.innerHTML = 'Processing...'; btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...'; btn.disabled = true;
+
+        // Gather Data
+        const formData = {
+            applicant_name: document.getElementById('applicantName').value,
+            department: document.getElementById('dept').value,
+            epf_no: document.getElementById('epfNo').value,
+            customer_name: document.getElementById('customerName').value,
+            location_address: document.getElementById('address').value,
+            claim_date: document.getElementById('appDate').value,
+            total_ot_hours: document.getElementById('sumOT').value,
+            total_meals_rs: document.getElementById('sumMeals').value,
+            total_acc_rs: document.getElementById('sumAcc').value,
+            total_fuel_rs: document.getElementById('sumFuel').value,
+            grand_total_rs: document.getElementById('grandTotal').value,
+            driver_name: document.getElementById('driverName').value,
+            vehicle_no: document.getElementById('vehicleNo').value,
+            form_details_json: {
+                remarks: document.getElementById('remarks').value,
+                acc_breakdown: getTableData('accBody'),
+                fuel_breakdown: getTableData('fuelBody')
+            }
+        };
 
         try {
-            // Save to SheetDB
-            if(SHEETDB_URL && !SHEETDB_URL.includes('PASTE')) {
-                const formData = {
-                    applicant_name: document.getElementById('applicantName').value,
-                    date: document.getElementById('appDate').value,
-                    customer: document.getElementById('customerName').value,
-                    total_meals: document.getElementById('sumMeals').value,
-                    total_acc: document.getElementById('sumAcc').value,
-                    total_fuel: document.getElementById('sumFuel').value,
-                    grand_total: document.getElementById('grandTotal').value
-                };
-                await fetch(SHEETDB_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data: formData })
-                });
+            // Save to DB
+            if(supabase) {
+                const { error } = await supabase.from('claim_reports').insert([formData]);
+                if(error) throw error;
             }
-
+            
+            // Generate PDF
             generatePDF();
-            document.getElementById('statusMessage').textContent = "Saved & Downloaded!";
-            document.getElementById('statusMessage').style.display = 'block';
-            document.getElementById('statusMessage').style.color = 'green';
-
-        } catch (err) {
+            alert('Success! Report Saved and PDF Downloaded.');
+            
+        } catch(err) {
             console.error(err);
-            generatePDF(); // Fallback
-            document.getElementById('statusMessage').textContent = "Offline Mode: PDF Generated.";
-            document.getElementById('statusMessage').style.display = 'block';
-            document.getElementById('statusMessage').style.color = 'orange';
+            // If DB fails, still give the PDF
+            if(confirm("Database Error: " + err.message + "\n\nDo you want to download the PDF anyway?")) {
+                generatePDF();
+            }
         } finally {
-            btn.innerHTML = origText; btn.disabled = false;
+            btn.innerHTML = originalText; btn.disabled = false;
         }
     });
+
+    function getTableData(tbodyId) {
+        let data = [];
+        document.getElementById(tbodyId).querySelectorAll('tr').forEach(tr => {
+            let row = [];
+            tr.querySelectorAll('input').forEach(i => row.push(i.value));
+            data.push(row);
+        });
+        return data;
+    }
 
     function generatePDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4'); // Landscape
 
-        // 1. Header
+        // Header
         doc.setFontSize(14); doc.setFont("helvetica", "bold");
         doc.text("OVER TIME / MEALS / ACCOMMODATION CLAIM FORM", 148, 15, null, null, "center");
         
         doc.setFontSize(9); doc.setFont("helvetica", "normal");
         let y = 30;
         doc.text(`Applicant: ${document.getElementById('applicantName').value}`, 15, y);
-        doc.text(`Dept: ${document.getElementById('dept').value}`, 120, y);
-        doc.text(`EPF: ${document.getElementById('epfNo').value}`, 220, y);
-        y+=6;
-        doc.text(`Customer: ${document.getElementById('customerName').value}`, 15, y);
-        doc.text(`Address: ${document.getElementById('address').value}`, 120, y);
-        y+=6;
-        doc.text(`Date: ${document.getElementById('appDate').value}`, 15, y);
+        doc.text(`Customer: ${document.getElementById('customerName').value}`, 90, y);
+        doc.text(`Date: ${document.getElementById('appDate').value}`, 220, y);
+        y += 6;
+        doc.text(`Address: ${document.getElementById('address').value}`, 15, y);
+        doc.text(`Dept: ${document.getElementById('dept').value} | EPF: ${document.getElementById('epfNo').value}`, 90, y);
         
-        // 2. Main Table
+        // Main Table
         let mainRows = [];
-        document.querySelectorAll('#mainTableBody tr').forEach(tr => {
-            let inputs = tr.querySelectorAll('input');
-            let rowData = [];
-            rowData.push(tr.cells[0].innerText); // #
-            inputs.forEach(inp => rowData.push(inp.value));
-            mainRows.push(rowData);
+        document.querySelectorAll('#mainBody tr').forEach(tr => {
+            let r = [];
+            r.push(tr.cells[0].innerText); // #
+            tr.querySelectorAll('input').forEach(i => r.push(i.value));
+            mainRows.push(r);
         });
 
         doc.autoTable({
             startY: 45,
-            head: [
-                [{content:'#', rowSpan:2}, {content:'Onsite', rowSpan:2}, {content:'Date', rowSpan:2}, {content:'Time', colSpan:2}, {content:'Meals (Rs)', colSpan:5}, {content:'OT Hrs', rowSpan:2}, {content:'Total', rowSpan:2}],
-                ['From','To','Bfast','Lunch','Tea','Dinner','Total']
-            ],
+            head: [[
+                {content:'#', rowSpan:2}, {content:'Onsite', rowSpan:2}, {content:'Date', rowSpan:2}, 
+                {content:'Time', colSpan:2}, {content:'Meals (Rs)', colSpan:5}, 
+                {content:'OT', rowSpan:2}, {content:'Total', rowSpan:2}
+            ], ['From','To','Bfast','Lunch','Tea','Dinner','Total']],
             body: mainRows,
-            theme: 'grid',
-            styles: { fontSize: 8, cellPadding: 1 },
-            headStyles: { fillColor: [200, 200, 200], textColor: 20 }
+            theme: 'grid', styles: { fontSize: 8, cellPadding: 1 },
+            headStyles: { fillColor: [52, 58, 64] }
         });
 
-        let finalY = doc.lastAutoTable.finalY + 10;
+        let fy = doc.lastAutoTable.finalY + 10;
 
-        // 3. Bottom Sections (Using Grid Logic manually)
-        
-        // Left Column: Accommodation
+        // Sub Tables
         let accRows = [];
         document.querySelectorAll('#accTableBody tr').forEach(tr => {
             accRows.push([tr.querySelector('input[type=date]').value, tr.querySelector('.acc-amount').value]);
         });
         
-        doc.text("Accommodation", 15, finalY);
+        doc.text("Accommodation", 15, fy);
         doc.autoTable({
-            startY: finalY + 2, margin: { left: 15 },
-            tableWidth: 60,
-            head: [['Date', 'Amount']],
-            body: accRows,
-            theme: 'grid', styles: { fontSize: 8 }
+            startY: fy + 2, margin: { left: 15 }, tableWidth: 60,
+            head: [['Date', 'Amount']], body: accRows, theme: 'grid', styles: { fontSize: 8 }
         });
         
-        // Middle Column: Summary (Accounts)
-        doc.text("Summary (Accounts)", 90, finalY);
-        doc.autoTable({
-            startY: finalY + 2, margin: { left: 90 },
-            tableWidth: 80,
-            head: [['Item', 'Seylan', 'Others']],
-            body: [
-                ['Printers', document.getElementById('acc_pr_seylan').value, document.getElementById('acc_pr_other').value],
-                ['UPS', document.getElementById('acc_ups_seylan').value, document.getElementById('acc_ups_other').value]
-            ],
-            theme: 'grid', styles: { fontSize: 8 }
-        });
-
-        // Right Column: Fuel
+        doc.text("Fuel", 150, fy);
         let fuelRows = [];
         document.querySelectorAll('#fuelTableBody tr').forEach(tr => {
             let inputs = tr.querySelectorAll('input');
             fuelRows.push([inputs[0].value, inputs[1].value, inputs[2].value]);
         });
-        
-        doc.text("Fuel", 190, finalY);
         doc.autoTable({
-            startY: finalY + 2, margin: { left: 190 },
-            tableWidth: 80,
-            head: [['Date', 'Km', 'Amount']],
-            body: fuelRows,
-            theme: 'grid', styles: { fontSize: 8 }
+            startY: fy + 2, margin: { left: 150 }, tableWidth: 80,
+            head: [['Date', 'Km', 'Amount']], body: fuelRows, theme: 'grid', styles: { fontSize: 8 }
         });
 
-        // Calculate max Y to start Totals
-        let nextY = Math.max(doc.lastAutoTable.finalY, finalY + 30) + 10;
-
-        // 4. Totals Box (Left side)
-        doc.setDrawColor(0); doc.setLineWidth(0.1);
-        doc.rect(15, nextY, 70, 35);
+        // Totals Box
+        let nextY = Math.max(doc.lastAutoTable.finalY, fy + 30) + 10;
+        doc.setDrawColor(0); doc.rect(15, nextY, 70, 30);
         doc.setFontSize(9);
-        doc.text(`OT Hours: ${document.getElementById('sumOTHours').value}`, 18, nextY + 6);
-        doc.text(`Meals Rs: ${document.getElementById('sumMeals').value}`, 18, nextY + 12);
-        doc.text(`Accommodation Rs: ${document.getElementById('sumAcc').value}`, 18, nextY + 18);
-        doc.text(`Fuel Rs: ${document.getElementById('sumFuel').value}`, 18, nextY + 24);
+        doc.text(`OT Hours: ${document.getElementById('sumOT').value}`, 18, nextY + 6);
+        doc.text(`Meals Rs: ${document.getElementById('sumMeals').value}`, 18, nextY + 11);
+        doc.text(`Acc Rs: ${document.getElementById('sumAcc').value}`, 18, nextY + 16);
+        doc.text(`Fuel Rs: ${document.getElementById('sumFuel').value}`, 18, nextY + 21);
         doc.setFont("helvetica", "bold");
-        doc.text(`GRAND TOTAL Rs: ${document.getElementById('grandTotal').value}`, 18, nextY + 32);
+        doc.text(`GRAND TOTAL Rs: ${document.getElementById('grandTotal').value}`, 18, nextY + 27);
 
-        // 5. Remarks (Middle)
-        doc.setFont("helvetica", "normal");
-        doc.text("Remarks:", 100, nextY);
-        let remarksText = doc.splitTextToSize(document.getElementById('remarks').value, 80);
-        doc.text(remarksText, 100, nextY + 5);
-
-        // 6. Signatures (Bottom)
+        // Signatures
         let sigY = nextY + 45;
+        if(!pads['sig1'].isEmpty()) doc.addImage(pads['sig1'].toDataURL(), 'PNG', 15, sigY-20, 40, 20);
+        if(!pads['sig2'].isEmpty()) doc.addImage(pads['sig2'].toDataURL(), 'PNG', 100, sigY-20, 40, 20);
+        if(!pads['sig3'].isEmpty()) doc.addImage(pads['sig3'].toDataURL(), 'PNG', 200, sigY-20, 40, 20);
         
-        // Add Images
-        if(!pads['sigApp'].isEmpty()) doc.addImage(pads['sigApp'].toDataURL(), 'PNG', 15, sigY - 20, 40, 20);
-        if(!pads['sigLead'].isEmpty()) doc.addImage(pads['sigLead'].toDataURL(), 'PNG', 100, sigY - 20, 40, 20);
-        if(!pads['sigAppr'].isEmpty()) doc.addImage(pads['sigAppr'].toDataURL(), 'PNG', 200, sigY - 20, 40, 20);
-
-        doc.line(15, sigY, 55, sigY); doc.text("Applicant", 15, sigY + 5);
-        doc.line(100, sigY, 140, sigY); doc.text("Team Leader", 100, sigY + 5);
-        doc.line(200, sigY, 240, sigY); doc.text("Approved By", 200, sigY + 5);
+        doc.setFont("helvetica", "normal");
+        doc.text("Applicant", 15, sigY+5); doc.line(15, sigY, 55, sigY);
+        doc.text("Team Leader", 100, sigY+5); doc.line(100, sigY, 140, sigY);
+        doc.text("Approved", 200, sigY+5); doc.line(200, sigY, 240, sigY);
 
         doc.save(`Claim_${document.getElementById('applicantName').value}.pdf`);
     }
@@ -473,5 +491,3 @@
 
 </body>
 </html>
-
-
