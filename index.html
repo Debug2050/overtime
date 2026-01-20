@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -346,7 +347,7 @@
 
 <div class="app-header">
     <h1><i class="bi bi-file-earmark-text"></i> Claim Form</h1>
-    <span id="statusBadge" class="status-badge status-online">System Ready</span>
+    <span id="statusBadge" class="status-badge status-offline">Connecting...</span>
 </div>
 
 <div class="app-container">
@@ -492,23 +493,113 @@
         </div>
 
         <button type="submit" class="submit-btn" id="submitBtn">
-            <i class="bi bi-download"></i> Download PDF
+            <i class="bi bi-download"></i> Save & Download PDF
         </button>
     </form>
 </div>
 
 <script>
+    // --- DATABASE CONFIGURATION ---
+    const SUPABASE_URL = 'https://ezdptfskycprzmbrxspx.supabase.co';
+    // >>> PASTE YOUR KEY HERE <<<
+    const SUPABASE_KEY = 'PASTE_YOUR_SUPABASE_ANON_KEY_HERE';
+    // ----------------------------
+
+    let supabase;
     let entryCount = 0;
     let pads = {};
 
     window.onload = function() {
         document.getElementById('appDate').valueAsDate = new Date();
-        // Initialize Signatures and First Rows immediately
         initSignatures();
         addEntry();
         addAcc();
         addFuel();
+        
+        // Connect to Database
+        if(SUPABASE_KEY.includes('PASTE')) {
+            updateStatus(false, 'Missing Key');
+        } else {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                updateStatus(true, 'System Online');
+            } catch(e) {
+                console.error(e);
+                updateStatus(false, 'DB Offline');
+            }
+        }
     };
+
+    function updateStatus(online, text) {
+        const badge = document.getElementById('statusBadge');
+        badge.className = `status-badge ${online ? 'status-online' : 'status-offline'}`;
+        badge.textContent = online ? '✓ ' + text : '✗ ' + text;
+    }
+
+    // --- DATABASE SAVE FUNCTION ---
+    async function saveToDatabase() {
+        if (!supabase) throw new Error("Database not connected");
+
+        // 1. Calculate values to be sure they are current
+        calculate();
+
+        // 2. Prepare Data Object
+        const formData = {
+            applicant_name: document.getElementById('applicantName').value,
+            department: document.getElementById('dept').value,
+            epf_no: document.getElementById('epfNo').value,
+            customer_name: document.getElementById('customerName').value,
+            location_address: document.getElementById('locationData').value,
+            claim_date: document.getElementById('appDate').value,
+            // Extract numeric values from text (remove "Rs " prefix)
+            total_ot_hours: parseFloat(document.getElementById('sumOT').textContent) || 0,
+            total_meals_rs: parseFloat(document.getElementById('sumMeals').textContent.replace('Rs ', '')) || 0,
+            total_acc_rs: parseFloat(document.getElementById('sumAcc').textContent.replace('Rs ', '')) || 0,
+            total_fuel_rs: parseFloat(document.getElementById('sumFuel').textContent.replace('Rs ', '')) || 0,
+            grand_total_rs: parseFloat(document.getElementById('grandTotal').textContent.replace('Rs ', '')) || 0,
+            driver_name: document.getElementById('driverName').value,
+            vehicle_no: document.getElementById('vehicleNo').value
+        };
+
+        // 3. Send to Supabase
+        const { error } = await supabase.from('claim_reports').insert([formData]);
+        
+        if (error) throw error;
+        return true;
+    }
+
+    // --- SUBMIT HANDLER ---
+    document.getElementById('claimForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const btn = document.getElementById('submitBtn');
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+        btn.disabled = true;
+
+        try {
+            // Step 1: Try to save to DB
+            if (supabase) {
+                await saveToDatabase();
+            }
+            
+            // Step 2: Generate PDF
+            generatePDF();
+            btn.innerHTML = '<i class="bi bi-check-circle"></i> Saved & Downloaded!';
+            
+        } catch(err) {
+            console.error(err);
+            // Even if DB fails, let user download PDF
+            if(confirm("Database Error: " + err.message + "\nDownload PDF anyway?")) {
+                generatePDF();
+            }
+            btn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Error (Retry)';
+        } finally {
+            setTimeout(() => {
+                btn.innerHTML = '<i class="bi bi-download"></i> Save & Download PDF';
+                btn.disabled = false;
+            }, 3000);
+        }
+    });
 
     // --- LOCATION FUNCTION ---
     function getLocation() {
@@ -528,39 +619,25 @@
             async (position) => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
-                
                 try {
-                    const response = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
-                        { headers: { 'User-Agent': 'ClaimFormApp' } }
-                    );
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
                     const data = await response.json();
-                    
                     if (data && data.display_name) {
-                        const city = data.address.city || data.address.town || data.address.village || 'Location';
                         hidden.value = data.display_name;
                         status.className = 'location-status location-success';
-                        status.innerHTML = `<div><i class="bi bi-check-circle"></i> <strong>${city}</strong><br><small style="font-size:11px;">${data.display_name.substring(0, 80)}...</small></div>`;
-                    } else {
-                        throw new Error('Address not found');
-                    }
+                        status.innerHTML = `<div><i class="bi bi-check-circle"></i> <strong>Location Found</strong><br><small>${data.display_name}</small></div>`;
+                    } else { throw new Error('Address not found'); }
                 } catch (error) {
-                    hidden.value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+                    hidden.value = `${lat}, ${lon}`;
                     status.className = 'location-status location-success';
-                    status.innerHTML = `<i class="bi bi-check-circle"></i> Location captured<br><small>Coords: ${lat.toFixed(4)}, ${lon.toFixed(4)}</small>`;
+                    status.innerHTML = `<i class="bi bi-check-circle"></i> Coords: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
                 }
             },
             (error) => {
                 status.className = 'location-status location-error';
-                if (error.code === 1) {
-                    status.innerHTML = '<i class="bi bi-x-circle"></i> Permission denied<br><small>Please allow location access</small>';
-                } else if (error.code === 2) {
-                    status.innerHTML = '<i class="bi bi-x-circle"></i> Location unavailable<br><small>Check GPS settings</small>';
-                } else {
-                    status.innerHTML = '<i class="bi bi-x-circle"></i> Timeout<br><small>Try again</small>';
-                }
+                status.innerHTML = '<i class="bi bi-x-circle"></i> GPS Error. Ensure HTTPS & Location On.';
             },
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            { enableHighAccuracy: true, timeout: 15000 }
         );
     }
 
@@ -569,201 +646,74 @@
         ['sig1', 'sig2', 'sig3'].forEach(id => {
             const canvas = document.getElementById(id);
             if(canvas) {
-                // Adjust canvas for high DPI
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
                 canvas.width = canvas.offsetWidth * ratio;
                 canvas.height = canvas.offsetHeight * ratio;
                 canvas.getContext("2d").scale(ratio, ratio);
-                
                 pads[id] = new SignaturePad(canvas, { backgroundColor: 'rgba(255,255,255,1)' });
             }
         });
     }
+    function clearSig(id) { if(pads[id]) pads[id].clear(); }
 
-    function clearSig(id) {
-        if(pads[id]) pads[id].clear();
-    }
-
-    // --- ROW ADDING FUNCTIONS ---
+    // --- ROW FUNCTIONS ---
     function addEntry() {
         entryCount++;
         const div = document.createElement('div');
         div.className = 'entry-item';
         div.innerHTML = `
-            <div class="entry-header">
-                <span class="entry-number">${entryCount}</span>
-                <button type="button" class="delete-btn" onclick="this.closest('.entry-item').remove(); calculate();">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Onsite Location</label>
-                <input type="text" class="form-control">
-            </div>
-            
+            <div class="entry-header"><span class="entry-number">${entryCount}</span><button type="button" class="delete-btn" onclick="this.closest('.entry-item').remove(); calculate();"><i class="bi bi-trash"></i></button></div>
+            <div class="form-group"><label class="form-label">Onsite Location</label><input type="text" class="form-control onsite-loc"></div>
             <div class="row-2col">
-                <div class="form-group">
-                    <label class="form-label">Date</label>
-                    <input type="date" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">OT Hours</label>
-                    <input type="number" class="form-control ot-hours" oninput="calculate()" step="0.5" min="0">
-                </div>
+                <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-control entry-date"></div>
+                <div class="form-group"><label class="form-label">OT Hours</label><input type="number" class="form-control ot-hours" oninput="calculate()" step="0.5" min="0"></div>
             </div>
-            
             <div class="row-2col">
-                <div class="form-group">
-                    <label class="form-label">From Time</label>
-                    <input type="time" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">To Time</label>
-                    <input type="time" class="form-control">
-                </div>
+                <div class="form-group"><label class="form-label">From</label><input type="time" class="form-control t-from"></div>
+                <div class="form-group"><label class="form-label">To</label><input type="time" class="form-control t-to"></div>
             </div>
-            
-            <div class="form-group">
-                <label class="form-label">Meals (Rs)</label>
-                <div class="row-2col">
-                    <input type="number" class="form-control meal-input" placeholder="Breakfast" oninput="calculate()" min="0">
-                    <input type="number" class="form-control meal-input" placeholder="Lunch" oninput="calculate()" min="0">
-                </div>
-                <div class="row-2col" style="margin-top:8px;">
-                    <input type="number" class="form-control meal-input" placeholder="Tea" oninput="calculate()" min="0">
-                    <input type="number" class="form-control meal-input" placeholder="Dinner" oninput="calculate()" min="0">
-                </div>
-            </div>
-        `;
+            <div class="form-group"><label class="form-label">Meals (Rs)</label>
+                <div class="row-2col"><input type="number" class="form-control meal-input" placeholder="B'fast" oninput="calculate()"><input type="number" class="form-control meal-input" placeholder="Lunch" oninput="calculate()"></div>
+                <div class="row-2col" style="margin-top:8px;"><input type="number" class="form-control meal-input" placeholder="Tea" oninput="calculate()"><input type="number" class="form-control meal-input" placeholder="Dinner" oninput="calculate()"></div>
+            </div>`;
         document.getElementById('entriesContainer').appendChild(div);
     }
 
     function addAcc() {
         const div = document.createElement('div');
         div.className = 'entry-item';
-        div.innerHTML = `
-            <div class="entry-header">
-                <span class="entry-number"><i class="bi bi-house"></i></span>
-                <button type="button" class="delete-btn" onclick="this.closest('.entry-item').remove(); calculate();">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-            <div class="row-2col">
-                <div class="form-group">
-                    <label class="form-label">Date</label>
-                    <input type="date" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Amount (Rs)</label>
-                    <input type="number" class="form-control acc-input" oninput="calculate()" min="0">
-                </div>
-            </div>
-        `;
+        div.innerHTML = `<div class="entry-header"><span class="entry-number"><i class="bi bi-house"></i></span><button type="button" class="delete-btn" onclick="this.closest('.entry-item').remove(); calculate();"><i class="bi bi-trash"></i></button></div><div class="row-2col"><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-control acc-date"></div><div class="form-group"><label class="form-label">Amount (Rs)</label><input type="number" class="form-control acc-input" oninput="calculate()" min="0"></div></div>`;
         document.getElementById('accContainer').appendChild(div);
     }
 
     function addFuel() {
         const div = document.createElement('div');
         div.className = 'entry-item';
-        div.innerHTML = `
-            <div class="entry-header">
-                <span class="entry-number"><i class="bi bi-fuel-pump"></i></span>
-                <button type="button" class="delete-btn" onclick="this.closest('.entry-item').remove(); calculate();">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-            <div class="row-3col">
-                <div class="form-group">
-                    <label class="form-label">Date</label>
-                    <input type="date" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">KM</label>
-                    <input type="number" class="form-control" min="0">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Amount</label>
-                    <input type="number" class="form-control fuel-input" oninput="calculate()" min="0">
-                </div>
-            </div>
-        `;
+        div.innerHTML = `<div class="entry-header"><span class="entry-number"><i class="bi bi-fuel-pump"></i></span><button type="button" class="delete-btn" onclick="this.closest('.entry-item').remove(); calculate();"><i class="bi bi-trash"></i></button></div><div class="row-3col"><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-control fuel-date"></div><div class="form-group"><label class="form-label">KM</label><input type="number" class="form-control fuel-km"></div><div class="form-group"><label class="form-label">Amount</label><input type="number" class="form-control fuel-input" oninput="calculate()"></div></div>`;
         document.getElementById('fuelContainer').appendChild(div);
     }
 
-    // --- CALCULATION LOGIC ---
     function calculate() {
         let meals = 0, ot = 0, acc = 0, fuel = 0;
+        document.querySelectorAll('.meal-input').forEach(i => meals += Number(i.value) || 0);
+        document.querySelectorAll('.ot-hours').forEach(i => ot += Number(i.value) || 0);
+        document.querySelectorAll('.acc-input').forEach(i => acc += Number(i.value) || 0);
+        document.querySelectorAll('.fuel-input').forEach(i => fuel += Number(i.value) || 0);
 
-        // Sum up all meal inputs
-        document.querySelectorAll('.meal-input').forEach(i => {
-            const val = parseFloat(i.value);
-            if(!isNaN(val)) meals += val;
-        });
-
-        // Sum up OT Hours
-        document.querySelectorAll('.ot-hours').forEach(i => {
-            const val = parseFloat(i.value);
-            if(!isNaN(val)) ot += val;
-        });
-
-        // Sum up Accommodation
-        document.querySelectorAll('.acc-input').forEach(i => {
-            const val = parseFloat(i.value);
-            if(!isNaN(val)) acc += val;
-        });
-
-        // Sum up Fuel
-        document.querySelectorAll('.fuel-input').forEach(i => {
-            const val = parseFloat(i.value);
-            if(!isNaN(val)) fuel += val;
-        });
-
-        // Update Text Content properly
         document.getElementById('sumOT').textContent = ot.toFixed(1);
         document.getElementById('sumMeals').textContent = 'Rs ' + meals.toFixed(2);
         document.getElementById('sumAcc').textContent = 'Rs ' + acc.toFixed(2);
         document.getElementById('sumFuel').textContent = 'Rs ' + fuel.toFixed(2);
-        
-        const grandTotal = meals + acc + fuel;
-        document.getElementById('grandTotal').textContent = 'Rs ' + grandTotal.toFixed(2);
+        document.getElementById('grandTotal').textContent = 'Rs ' + (meals + acc + fuel).toFixed(2);
     }
-
-    // --- PDF GENERATION ---
-    document.getElementById('claimForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const btn = document.getElementById('submitBtn');
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating PDF...';
-        btn.disabled = true;
-
-        setTimeout(() => {
-            try {
-                generatePDF();
-                btn.innerHTML = '<i class="bi bi-check-circle"></i> PDF Downloaded!';
-            } catch(err) {
-                console.error(err);
-                alert("Error generating PDF: " + err.message);
-                btn.innerHTML = 'Error! Try Again';
-            }
-            
-            setTimeout(() => {
-                btn.innerHTML = '<i class="bi bi-download"></i> Download PDF';
-                btn.disabled = false;
-            }, 2000);
-        }, 500);
-    });
 
     function generatePDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
 
-        doc.setFontSize(16);
-        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16); doc.setFont("helvetica", "bold");
         doc.text("Overtime & Claim Form", 105, 15, null, null, "center");
-
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10); doc.setFont("helvetica", "normal");
         
         let y = 30;
         doc.text(`Name: ${document.getElementById('applicantName').value}`, 15, y);
@@ -776,19 +726,33 @@
         const loc = document.getElementById('locationData').value || "Not Checked In";
         doc.text(`Location: ${loc}`, 15, y);
 
-        y += 10;
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
+        // Main Table construction
+        let mainRows = [];
+        document.querySelectorAll('#entriesContainer .entry-item').forEach((div, index) => {
+            const loc = div.querySelector('.onsite-loc')?.value || '';
+            const date = div.querySelector('.entry-date')?.value || '';
+            const ot = div.querySelector('.ot-hours')?.value || '';
+            const meals = Array.from(div.querySelectorAll('.meal-input')).reduce((a, b) => a + (Number(b.value) || 0), 0);
+            mainRows.push([index + 1, loc, date, ot, meals]);
+        });
+
+        doc.autoTable({
+            startY: y + 10,
+            head: [['#', 'Onsite', 'Date', 'OT Hrs', 'Meals (Rs)']],
+            body: mainRows,
+            theme: 'grid', styles: { fontSize: 9 }
+        });
+
+        y = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(12); doc.setFont("helvetica", "bold");
         doc.text("Summary", 15, y);
-        
         y += 8;
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.text(`Total OT Hours: ${document.getElementById('sumOT').textContent}`, 15, y);
+        doc.setFontSize(10); doc.setFont("helvetica", "normal");
+        doc.text(`Total OT: ${document.getElementById('sumOT').textContent}`, 15, y);
         y += 6;
         doc.text(`Total Meals: ${document.getElementById('sumMeals').textContent}`, 15, y);
         y += 6;
-        doc.text(`Total Accommodation: ${document.getElementById('sumAcc').textContent}`, 15, y);
+        doc.text(`Total Acc: ${document.getElementById('sumAcc').textContent}`, 15, y);
         y += 6;
         doc.text(`Total Fuel: ${document.getElementById('sumFuel').textContent}`, 15, y);
         y += 8;
@@ -797,18 +761,9 @@
 
         // Signatures
         y += 20;
-        if (!pads['sig1'].isEmpty()) {
-            doc.addImage(pads['sig1'].toDataURL(), 'PNG', 15, y, 50, 30);
-            doc.text("Applicant", 15, y + 35);
-        }
-        if (!pads['sig2'].isEmpty()) {
-            doc.addImage(pads['sig2'].toDataURL(), 'PNG', 80, y, 50, 30);
-            doc.text("Team Leader", 80, y + 35);
-        }
-        if (!pads['sig3'].isEmpty()) {
-            doc.addImage(pads['sig3'].toDataURL(), 'PNG', 145, y, 50, 30);
-            doc.text("Approved", 145, y + 35);
-        }
+        if (!pads['sig1'].isEmpty()) { doc.addImage(pads['sig1'].toDataURL(), 'PNG', 15, y, 50, 30); doc.text("Applicant", 15, y + 35); }
+        if (!pads['sig2'].isEmpty()) { doc.addImage(pads['sig2'].toDataURL(), 'PNG', 80, y, 50, 30); doc.text("Team Leader", 80, y + 35); }
+        if (!pads['sig3'].isEmpty()) { doc.addImage(pads['sig3'].toDataURL(), 'PNG', 145, y, 50, 30); doc.text("Approved", 145, y + 35); }
 
         doc.save(`Claim_${document.getElementById('applicantName').value}.pdf`);
     }
