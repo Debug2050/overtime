@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overtime & Claim Form</title>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f4f6f9; padding: 20px; }
+        .container { background: white; max-width: 1200px; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        h2 { color: #2c3e50; font-weight: 700; text-align: center; margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        .form-label { font-weight: 600; font-size: 0.9rem; color: #555; }
+        .form-control, .form-select { font-size: 0.9rem; border-radius: 5px; }
+        
+        /* Table Styles */
+        .table-responsive { overflow-x: auto; }
+        table th { background-color: #f8f9fa; font-size: 0.85rem; text-align: center; vertical-align: middle; }
+        table td { padding: 5px !important; }
+        table input { min-width: 60px; text-align: center; border: 1px solid #dee2e6; border-radius: 4px; padding: 4px; width: 100%; }
+        
+        .btn-add { background: #28a745; color: white; border: none; padding: 5px 15px; border-radius: 5px; font-size: 0.9rem; }
+        .btn-calc { background: #17a2b8; color: white; border: none; margin-right: 10px; }
+        .btn-save { background: #007bff; color: white; padding: 12px 30px; font-size: 1.1rem; border-radius: 8px; border: none; }
+        
+        .total-box { background: #e9ecef; font-weight: bold; text-align: right; }
+        .remove-row { color: #dc3545; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>OVER TIME / MEALS / ACCOMMODATION CLAIM FORM</h2>
+    
+    <form id="claimForm">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label class="form-label">Name of Applicant</label>
+                <input type="text" class="form-control" id="applicantName" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Department</label>
+                <input type="text" class="form-control" id="department">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">EPF No</label>
+                <input type="text" class="form-control" id="epfNo">
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Name of Customer</label>
+                <input type="text" class="form-control" id="customerName" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Address</label>
+                <input type="text" class="form-control" id="address">
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <label class="form-label">Date of Application</label>
+                <input type="date" class="form-control" id="appDate" required>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <div class="form-check me-4">
+                    <input class="form-check-input" type="radio" name="locationType" id="locColombo" value="Colombo City Limits" checked>
+                    <label class="form-check-label" for="locColombo">Colombo City Limits</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="locationType" id="locOutstation" value="Outstation">
+                    <label class="form-check-label" for="locOutstation">O/Station</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive mb-3">
+            <table class="table table-bordered" id="claimsTable">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="width: 30px;">#</th>
+                        <th rowspan="2">Onsite Nos</th>
+                        <th rowspan="2" style="width: 110px;">Date</th>
+                        <th colspan="2">Time</th>
+                        <th colspan="5">Meals Entitlement (Rs)</th>
+                        <th rowspan="2">Overtime<br>Hours</th>
+                        <th rowspan="2" style="width: 100px;">Total for<br>Day (Rs)</th>
+                        <th rowspan="2" style="width: 30px;"></th>
+                    </tr>
+                    <tr>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>B'Fast</th>
+                        <th>Lunch</th>
+                        <th>Tea</th>
+                        <th>Dinner</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="11" class="text-end fw-bold p-2">GRAND TOTAL (Rs):</td>
+                        <td><input type="number" id="grandTotal" class="form-control fw-bold" readonly></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <button type="button" class="btn btn-add mb-4" onclick="addRow()">+ Add Row</button>
+
+        <div class="row mb-4 bg-light p-3 rounded">
+            <div class="col-md-6">
+                <label class="form-label">Driver Name</label>
+                <input type="text" class="form-control" id="driverName">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Vehicle No</label>
+                <input type="text" class="form-control" id="vehicleNo">
+            </div>
+        </div>
+
+        <div class="text-center">
+            <button type="button" class="btn btn-calc" onclick="calculateAll()">
+                <i class="bi bi-calculator"></i> Calculate Totals
+            </button>
+            <button type="submit" class="btn btn-save" id="submitBtn">
+                <i class="bi bi-cloud-arrow-up"></i> Save & Download PDF
+            </button>
+        </div>
+        <div id="statusMessage" class="mt-3 text-center" style="display:none; font-weight:bold;"></div>
+    </form>
+</div>
+
+<script>
+    // --- CONFIGURATION ---
+    const SHEETDB_URL = 'PASTE_YOUR_SHEETDB_URL_HERE'; 
+    // ---------------------
+
+    // 1. Initialize with one row
+    window.onload = function() {
+        document.getElementById('appDate').valueAsDate = new Date();
+        addRow();
+    };
+
+    // 2. Add Row Function
+    function addRow() {
+        const tbody = document.getElementById('tableBody');
+        const rowCount = tbody.rows.length + 1;
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td class="text-center">${rowCount}</td>
+            <td><input type="text" class="onsite"></td>
+            <td><input type="date" class="date-input"></td>
+            <td><input type="time" class="time-from"></td>
+            <td><input type="time" class="time-to"></td>
+            <td><input type="number" class="meal-input" placeholder="0" oninput="calcRow(this)"></td> <td><input type="number" class="meal-input" placeholder="0" oninput="calcRow(this)"></td> <td><input type="number" class="meal-input" placeholder="0" oninput="calcRow(this)"></td> <td><input type="number" class="meal-input" placeholder="0" oninput="calcRow(this)"></td> <td><input type="number" class="meal-total" readonly style="background:#f8f9fa;"></td>
+            <td><input type="number" class="ot-hours" placeholder="0"></td>
+            <td><input type="number" class="day-total" placeholder="0" onchange="calculateAll()"></td>
+            <td class="text-center"><i class="bi bi-trash remove-row" onclick="removeRow(this)"></i></td>
+        `;
+        tbody.appendChild(row);
+    }
+
+    // 3. Remove Row
+    function removeRow(btn) {
+        const row = btn.parentNode.parentNode;
+        row.parentNode.removeChild(row);
+        calculateAll();
+    }
+
+    // 4. Calculate Single Row (Meals)
+    function calcRow(input) {
+        const row = input.closest('tr');
+        const mealInputs = row.querySelectorAll('.meal-input');
+        let mealSum = 0;
+        
+        mealInputs.forEach(inp => {
+            mealSum += parseFloat(inp.value || 0);
+        });
+
+        row.querySelector('.meal-total').value = mealSum;
+        // Auto update day total if user wants (optional logic)
+        // row.querySelector('.day-total').value = mealSum; 
+        calculateAll();
+    }
+
+    // 5. Calculate Grand Totals
+    function calculateAll() {
+        const dayTotals = document.querySelectorAll('.day-total');
+        let grandTotal = 0;
+        
+        dayTotals.forEach(input => {
+            grandTotal += parseFloat(input.value || 0);
+        });
+        
+        document.getElementById('grandTotal').value = grandTotal;
+        return grandTotal;
+    }
+
+    // 6. Handle Submission
+    document.getElementById('claimForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        calculateAll();
+
+        const btn = document.getElementById('submitBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'Processing...';
+        btn.disabled = true;
+
+        const formData = {
+            applicant_name: document.getElementById('applicantName').value,
+            department: document.getElementById('department').value,
+            epf_no: document.getElementById('epfNo').value,
+            customer_name: document.getElementById('customerName').value,
+            application_date: document.getElementById('appDate').value,
+            location: document.querySelector('input[name="locationType"]:checked').value,
+            grand_total: document.getElementById('grandTotal').value,
+            vehicle_no: document.getElementById('vehicleNo').value
+        };
+
+        try {
+            // A. Save to Google Sheets
+            if(SHEETDB_URL && !SHEETDB_URL.includes('PASTE')) {
+                await fetch(SHEETDB_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: formData })
+                });
+            }
+
+            // B. Generate PDF
+            generatePDF();
+
+            document.getElementById('statusMessage').textContent = "Success! Saved and downloaded.";
+            document.getElementById('statusMessage').style.color = "green";
+            document.getElementById('statusMessage').style.display = "block";
+
+        } catch (error) {
+            console.error(error);
+            alert("Error saving data, but PDF will still generate.");
+            generatePDF();
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    });
+
+    // 7. PDF Generation Logic
+    function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4'); // Landscape mode
+
+        // Title
+        doc.setFontSize(16);
+        doc.text("OVER TIME / MEALS / ACCOMMODATION CLAIM FORM", 148, 15, null, null, "center");
+
+        // Header Info
+        doc.setFontSize(10);
+        let y = 30;
+        doc.text(`Applicant: ${document.getElementById('applicantName').value}`, 15, y);
+        doc.text(`Dept: ${document.getElementById('department').value}`, 120, y);
+        doc.text(`EPF No: ${document.getElementById('epfNo').value}`, 220, y);
+        
+        y += 7;
+        doc.text(`Customer: ${document.getElementById('customerName').value}`, 15, y);
+        
+        y += 7;
+        doc.text(`Address: ${document.getElementById('address').value}`, 15, y);
+
+        y += 7;
+        doc.text(`Date: ${document.getElementById('appDate').value}`, 15, y);
+        const loc = document.querySelector('input[name="locationType"]:checked').value;
+        doc.text(`Location: ${loc}`, 120, y);
+
+        // Table Data extraction
+        const tableRows = [];
+        const tbody = document.getElementById('tableBody');
+        for (let i = 0; i < tbody.rows.length; i++) {
+            const row = tbody.rows[i];
+            const inputs = row.querySelectorAll('input');
+            const rowData = [
+                i + 1,
+                inputs[0].value, // Onsite
+                inputs[1].value, // Date
+                inputs[2].value, // From
+                inputs[3].value, // To
+                inputs[4].value, // Bfast
+                inputs[5].value, // Lunch
+                inputs[6].value, // Tea
+                inputs[7].value, // Dinner
+                inputs[8].value, // Meal Total
+                inputs[9].value, // OT Hours
+                inputs[10].value // Day Total
+            ];
+            tableRows.push(rowData);
+        }
+
+        // Add Table
+        doc.autoTable({
+            startY: 55,
+            head: [
+                [{content: '#', rowSpan: 2}, {content: 'Onsite', rowSpan: 2}, {content: 'Date', rowSpan: 2}, {content: 'Time', colSpan: 2}, {content: 'Meals Entitlement (Rs)', colSpan: 5}, {content: 'OT Hrs', rowSpan: 2}, {content: 'Total Rs', rowSpan: 2}],
+                ['From', 'To', 'Bfast', 'Lunch', 'Tea', 'Dinner', 'Total']
+            ],
+            body: tableRows,
+            theme: 'grid',
+            headStyles: { fillColor: [44, 62, 80] },
+            styles: { fontSize: 8, cellPadding: 2 }
+        });
+
+        // Footer Info
+        let finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(10);
+        doc.text(`Grand Total: Rs. ${document.getElementById('grandTotal').value}`, 230, finalY);
+        
+        finalY += 15;
+        doc.text(`Driver: ${document.getElementById('driverName').value}`, 15, finalY);
+        doc.text(`Vehicle No: ${document.getElementById('vehicleNo').value}`, 150, finalY);
+
+        // Signatures
+        finalY += 20;
+        doc.text("___________________", 15, finalY);
+        doc.text("Applicant Signature", 15, finalY + 5);
+
+        doc.text("___________________", 150, finalY);
+        doc.text("Authorized Signature", 150, finalY + 5);
+
+        doc.save(`Claim_${document.getElementById('applicantName').value}.pdf`);
+    }
+</script>
+
+</body>
+</html>
