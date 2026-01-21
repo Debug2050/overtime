@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -356,7 +357,7 @@
             
             <div class="form-group">
                 <label class="form-label">Name of Applicant *</label>
-                <input type="text" id="applicantName" class="form-control" required placeholder="Enter full name">
+                <input type="text" id="applicantName" class="form-control" required>
             </div>
 
             <div class="row-2col">
@@ -366,25 +367,29 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">EPF No *</label>
-                    <input type="text" id="epfNo" class="form-control" required placeholder="EPF Number">
+                    <input type="text" id="epfNo" class="form-control" required>
                 </div>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Department *</label>
                 <select id="dept" class="form-select" required>
-                    <option value="">Select Department</option>
-                    <option value="Engineering">Engineering</option>
-                    <option value="Operations">Operations</option>
-                    <option value="Sales">Sales</option>
-                    <option value="IT">IT</option>
-                    <option value="Other">Other</option>
+                    <option value="">Select Dept</option>
+                    <option>Engineering</option>
+                    <option>Operations</option>
+                    <option>Maintenance</option>
+                    <option>IT Support</option>
                 </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Customer Name *</label>
+                <input type="text" id="customerName" class="form-control" required>
             </div>
         </div>
 
         <div class="location-card">
-            <div class="card-title" style="color:white;"><i class="bi bi-geo-alt-fill"></i> Location Check-in</div>
+            <div class="card-title" style="color:white;"><i class="bi bi-geo-alt-fill"></i> Location Verification *</div>
             <button type="button" class="location-btn" onclick="getLocation()">
                 <i class="bi bi-pin-map"></i> Capture Current Location
             </button>
@@ -395,29 +400,15 @@
         </div>
 
         <div class="form-card">
-            <div class="card-title"><i class="bi bi-building"></i> Customer Details</div>
-            <div class="form-group">
-                <label class="form-label">Customer Name *</label>
-                <input type="text" id="customerName" class="form-control" required placeholder="Enter customer/site name">
-            </div>
-        </div>
-
-        <div class="form-card">
-            <div class="card-title">
-                <i class="bi bi-clock-history"></i> Overtime Details
-                <span class="ms-auto total-badge" id="sumOT">0.0</span>
-            </div>
+            <div class="card-title"><i class="bi bi-clock-history"></i> Overtime Details</div>
             <div id="entriesContainer"></div>
             <button type="button" class="add-btn" onclick="addEntry()">
-                <i class="bi bi-plus-circle"></i> Add OT Row
+                <i class="bi bi-plus-circle"></i> Add OT Entry
             </button>
         </div>
 
         <div class="form-card">
-            <div class="card-title">
-                <i class="bi bi-house"></i> Accommodation
-                <span class="ms-auto total-badge" id="sumAcc">Rs 0.00</span>
-            </div>
+            <div class="card-title"><i class="bi bi-house-door"></i> Accommodation</div>
             <div id="accContainer"></div>
             <button type="button" class="add-btn" onclick="addAcc()">
                 <i class="bi bi-plus-circle"></i> Add Accommodation
@@ -425,13 +416,10 @@
         </div>
 
         <div class="form-card">
-            <div class="card-title">
-                <i class="bi bi-fuel-pump"></i> Fuel & Transport
-                <span class="ms-auto total-badge" id="sumFuel">Rs 0.00</span>
-            </div>
+            <div class="card-title"><i class="bi bi-droplet"></i> Fuel & Other</div>
             <div id="fuelContainer"></div>
             <button type="button" class="add-btn" onclick="addFuel()">
-                <i class="bi bi-plus-circle"></i> Add Fuel Row
+                <i class="bi bi-plus-circle"></i> Add Fuel Entry
             </button>
         </div>
 
@@ -439,15 +427,19 @@
             <div class="card-title"><i class="bi bi-calculator"></i> Claim Summary</div>
             <div class="summary-box">
                 <div class="summary-row">
+                    <span>Total OT Hours</span>
+                    <span id="sumOT" class="total-badge">0.0</span>
+                </div>
+                <div class="summary-row">
                     <span>Total Meals</span>
                     <span id="sumMeals">Rs 0.00</span>
                 </div>
                 <div class="summary-row">
-                    <span>Total Accommodation</span>
+                    <span>Accommodation</span>
                     <span id="sumAccSummary">Rs 0.00</span>
                 </div>
                 <div class="summary-row">
-                    <span>Total Fuel</span>
+                    <span>Fuel & Other</span>
                     <span id="sumFuelSummary">Rs 0.00</span>
                 </div>
                 <div class="summary-row">
@@ -457,8 +449,8 @@
             </div>
         </div>
 
-        <div class="form-card">
-            <div class="card-title"><i class="bi bi-pen"></i> Signatures</div>
+        <div class="form-card" style="margin-bottom: 40px;">
+            <div class="card-title"><i class="bi bi-pen"></i> Authorizations</div>
             
             <div class="signature-pad-container">
                 <span class="sig-label">Applicant Signature</span>
@@ -487,14 +479,13 @@
 
 <script>
     let entryCount = 0;
-    let pads = {};
+    const pads = {};
 
-    window.onload = function() {
-        document.getElementById('appDate').valueAsDate = new Date();
+    window.onload = () => {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('appDate').value = today;
         initSignatures();
         addEntry();
-        addAcc();
-        addFuel();
     };
 
     function getLocation() {
@@ -690,35 +681,76 @@
 
         document.getElementById('sumOT').textContent = ot.toFixed(1);
         document.getElementById('sumMeals').textContent = 'Rs ' + meals.toFixed(2);
-        document.getElementById('sumAcc').textContent = 'Rs ' + acc.toFixed(2);
         document.getElementById('sumAccSummary').textContent = 'Rs ' + acc.toFixed(2);
-        document.getElementById('sumFuel').textContent = 'Rs ' + fuel.toFixed(2);
         document.getElementById('sumFuelSummary').textContent = 'Rs ' + fuel.toFixed(2);
         
         const grandTotal = meals + acc + fuel;
         document.getElementById('grandTotal').textContent = 'Rs ' + grandTotal.toFixed(2);
     }
 
-    document.getElementById('claimForm').addEventListener('submit', function(e) {
+    // Supabase Configuration
+    const SUPABASE_URL = 'https://jzjeiytwxtkpyuogphys.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6amVpeXR3eHRrcHl1b2dwaHlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NjA1MTIsImV4cCI6MjA4NDQzNjUxMn0.Zq-dCX5PQAhtkNJNWzJ9BAKoJdAOC0VHEtfis9T5ShM';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    document.getElementById('claimForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const btn = document.getElementById('submitBtn');
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating PDF...';
+        
+        // 1. Check Location
+        const locationVal = document.getElementById('locationData').value;
+        if (!locationVal) {
+            alert("Please capture your location before submitting.");
+            document.querySelector('.location-card').scrollIntoView({ behavior: 'smooth' });
+            return;
+        }
+
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving to Database...';
         btn.disabled = true;
 
+        // Gather data
+        const claimData = {
+            applicant_name: document.getElementById('applicantName').value,
+            app_date: document.getElementById('appDate').value,
+            dept: document.getElementById('dept').value,
+            epf_no: document.getElementById('epfNo').value,
+            customer_name: document.getElementById('customerName').value,
+            location: locationVal,
+            total_ot_hours: parseFloat(document.getElementById('sumOT').textContent) || 0,
+            total_meals: parseFloat(document.getElementById('sumMeals').textContent.replace('Rs ', '')) || 0,
+            total_accommodation: parseFloat(document.getElementById('sumAccSummary').textContent.replace('Rs ', '')) || 0,
+            total_fuel: parseFloat(document.getElementById('sumFuelSummary').textContent.replace('Rs ', '')) || 0,
+            grand_total: parseFloat(document.getElementById('grandTotal').textContent.replace('Rs ', '')) || 0,
+            signature_applicant: pads['sig1'].isEmpty() ? null : pads['sig1'].toDataURL(),
+            signature_team_leader: pads['sig2'].isEmpty() ? null : pads['sig2'].toDataURL(),
+            signature_approved: pads['sig3'].isEmpty() ? null : pads['sig3'].toDataURL()
+        };
+
+        try {
+            // 2. Save to Database (MUST SUCCEED)
+            const { data, error } = await supabaseClient
+                .from('claims')
+                .insert([claimData]);
+
+            if (error) throw error;
+            
+            // 3. Generate and Download PDF (ONLY IF DB SUCCESS)
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating PDF...';
+            generatePDF();
+            
+            btn.innerHTML = '<i class="bi bi-check-circle"></i> Saved & Downloaded!';
+        } catch (err) {
+            console.error('Database Error:', err.message);
+            alert("Database Error: Could not save claim. PDF download blocked.\n\nDetails: " + err.message);
+            btn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> DB Error - Try Again';
+            btn.disabled = false;
+            return; // STOP HERE - NO DOWNLOAD
+        }
+
         setTimeout(() => {
-            try {
-                generatePDF();
-                btn.innerHTML = '<i class="bi bi-check-circle"></i> PDF Downloaded!';
-            } catch(err) {
-                console.error(err);
-                alert("Error generating PDF: " + err.message);
-                btn.innerHTML = 'Error! Try Again';
-            }
-            setTimeout(() => {
-                btn.innerHTML = '<i class="bi bi-download"></i> Download PDF';
-                btn.disabled = false;
-            }, 2000);
-        }, 500);
+            btn.innerHTML = '<i class="bi bi-download"></i> Download PDF';
+            btn.disabled = false;
+        }, 3000);
     });
 
     function generatePDF() {
@@ -750,13 +782,14 @@
         y += 6;
         doc.text(`Total Meals: ${document.getElementById('sumMeals').textContent}`, 15, y);
         y += 6;
-        doc.text(`Total Accommodation: ${document.getElementById('sumAcc').textContent}`, 15, y);
+        doc.text(`Total Accommodation: ${document.getElementById('sumAccSummary').textContent}`, 15, y);
         y += 6;
-        doc.text(`Total Fuel: ${document.getElementById('sumFuel').textContent}`, 15, y);
+        doc.text(`Total Fuel: ${document.getElementById('sumFuelSummary').textContent}`, 15, y);
         y += 8;
         doc.setFont("helvetica", "bold");
         doc.text(`GRAND TOTAL: ${document.getElementById('grandTotal').textContent}`, 15, y);
         y += 20;
+
         if (!pads['sig1'].isEmpty()) {
             doc.addImage(pads['sig1'].toDataURL(), 'PNG', 15, y, 50, 30);
             doc.text("Applicant", 15, y + 35);
@@ -771,47 +804,6 @@
         }
         doc.save(`Claim_${document.getElementById('applicantName').value}.pdf`);
     }
-</script>
-
-<!-- Supabase Integration -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-    // REPLACE THESE WITH YOUR ACTUAL SUPABASE CREDENTIALS
-    const SUPABASE_URL = 'https://jzjeiytwxtkpyuogphys.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6amVpeXR3eHRrcHl1b2dwaHlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NjA1MTIsImV4cCI6MjA4NDQzNjUxMn0.Zq-dCX5PQAhtkNJNWzJ9BAKoJdAOC0VHEtfis9T5ShM';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    document.getElementById('claimForm').addEventListener('submit', async function(e) {
-        // Gather data from the form and calculated fields
-        const claimData = {
-            applicant_name: document.getElementById('applicantName').value,
-            app_date: document.getElementById('appDate').value,
-            dept: document.getElementById('dept').value,
-            epf_no: document.getElementById('epfNo').value,
-            customer_name: document.getElementById('customerName').value,
-            location: document.getElementById('locationData').value || "Not Checked In",
-            total_ot_hours: parseFloat(document.getElementById('sumOT').textContent) || 0,
-            total_meals: parseFloat(document.getElementById('sumMeals').textContent.replace('Rs ', '')) || 0,
-            total_accommodation: parseFloat(document.getElementById('sumAcc').textContent.replace('Rs ', '')) || 0,
-            total_fuel: parseFloat(document.getElementById('sumFuel').textContent.replace('Rs ', '')) || 0,
-            grand_total: parseFloat(document.getElementById('grandTotal').textContent.replace('Rs ', '')) || 0,
-            // Capture signatures as Base64 strings
-            signature_applicant: pads['sig1'].isEmpty() ? null : pads['sig1'].toDataURL(),
-            signature_team_leader: pads['sig2'].isEmpty() ? null : pads['sig2'].toDataURL(),
-            signature_approved: pads['sig3'].isEmpty() ? null : pads['sig3'].toDataURL()
-        };
-
-        try {
-            const { data, error } = await supabaseClient
-                .from('claims')
-                .insert([claimData]);
-
-            if (error) throw error;
-            console.log('Data successfully saved to Supabase:', data);
-        } catch (err) {
-            console.error('Error saving to Supabase:', err.message);
-        }
-    });
 </script>
 
 </body>
