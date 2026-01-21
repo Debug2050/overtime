@@ -577,18 +577,18 @@
                     <input type="date" class="form-control">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">OT Hours</label>
-                    <input type="number" class="form-control ot-hours" oninput="calculate()" step="0.5" min="0">
+                    <label class="form-label">OT Hours (Auto)</label>
+                    <input type="number" class="form-control ot-hours" readonly step="0.5" min="0" value="0">
                 </div>
             </div>
             <div class="row-2col">
                 <div class="form-group">
-                    <label class="form-label">From Time</label>
-                    <input type="time" class="form-control">
+                    <label class="form-label">In Time</label>
+                    <input type="time" class="form-control in-time" oninput="calculateOT(this)">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">To Time</label>
-                    <input type="time" class="form-control">
+                    <label class="form-label">Out Time</label>
+                    <input type="time" class="form-control out-time" oninput="calculateOT(this)">
                 </div>
             </div>
             <div class="form-group">
@@ -604,6 +604,32 @@
             </div>
         `;
         document.getElementById('entriesContainer').appendChild(div);
+    }
+
+    function calculateOT(element) {
+        const entryItem = element.closest('.entry-item');
+        const inTime = entryItem.querySelector('.in-time').value;
+        const outTime = entryItem.querySelector('.out-time').value;
+        const otInput = entryItem.querySelector('.ot-hours');
+
+        if (inTime && outTime) {
+            const [inH, inM] = inTime.split(':').map(Number);
+            const [outH, outM] = outTime.split(':').map(Number);
+            
+            let diff = (outH * 60 + outM) - (inH * 60 + inM);
+            
+            // Handle overnight shifts
+            if (diff < 0) diff += 24 * 60;
+            
+            const hours = diff / 60;
+            // Assuming standard 8 hours shift, OT is anything above 8? 
+            // Or is the whole duration OT? Based on "OT Hours" label, I'll assume the whole duration is recorded as OT for this form.
+            // If there's a standard shift to subtract, you can add it here.
+            otInput.value = hours.toFixed(1);
+        } else {
+            otInput.value = 0;
+        }
+        calculate();
     }
 
     function addAcc() {
@@ -828,5 +854,3 @@
 
 </body>
 </html>
-
-
