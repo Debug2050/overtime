@@ -356,62 +356,68 @@
             
             <div class="form-group">
                 <label class="form-label">Name of Applicant *</label>
-                <input type="text" class="form-control" id="applicantName" required>
+                <input type="text" id="applicantName" class="form-control" required placeholder="Enter full name">
             </div>
 
             <div class="row-2col">
                 <div class="form-group">
-                    <label class="form-label">Department</label>
-                    <input type="text" class="form-control" id="dept">
+                    <label class="form-label">Date *</label>
+                    <input type="date" id="appDate" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">EPF No</label>
-                    <input type="text" class="form-control" id="epfNo">
+                    <label class="form-label">EPF No *</label>
+                    <input type="text" id="epfNo" class="form-control" required placeholder="EPF Number">
                 </div>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Customer Name</label>
-                <input type="text" class="form-control" id="customerName">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Date *</label>
-                <input type="date" class="form-control" id="appDate" required>
+                <label class="form-label">Department *</label>
+                <select id="dept" class="form-select" required>
+                    <option value="">Select Department</option>
+                    <option value="Engineering">Engineering</option>
+                    <option value="Operations">Operations</option>
+                    <option value="Sales">Sales</option>
+                    <option value="IT">IT</option>
+                    <option value="Other">Other</option>
+                </select>
             </div>
         </div>
 
         <div class="location-card">
+            <div class="card-title" style="color:white;"><i class="bi bi-geo-alt-fill"></i> Location Check-in</div>
             <button type="button" class="location-btn" onclick="getLocation()">
-                <i class="bi bi-geo-alt-fill"></i> Check-In Location
+                <i class="bi bi-pin-map"></i> Capture Current Location
             </button>
             <div id="locationStatus" class="location-status">
-                <span>Tap button to verify location</span>
+                Location not captured yet
             </div>
             <input type="hidden" id="locationData">
-            
-            <div class="checkbox-group">
-                <label>
-                    <input type="checkbox" id="checkColombo">
-                    <span>Colombo City</span>
-                </label>
-                <label>
-                    <input type="checkbox" id="checkOutstation">
-                    <span>Outstation</span>
-                </label>
+        </div>
+
+        <div class="form-card">
+            <div class="card-title"><i class="bi bi-building"></i> Customer Details</div>
+            <div class="form-group">
+                <label class="form-label">Customer Name *</label>
+                <input type="text" id="customerName" class="form-control" required placeholder="Enter customer/site name">
             </div>
         </div>
 
         <div class="form-card">
-            <div class="card-title"><i class="bi bi-calendar-check"></i> Daily Entries</div>
+            <div class="card-title">
+                <i class="bi bi-clock-history"></i> Overtime Details
+                <span class="ms-auto total-badge" id="sumOT">0.0</span>
+            </div>
             <div id="entriesContainer"></div>
             <button type="button" class="add-btn" onclick="addEntry()">
-                <i class="bi bi-plus-circle"></i> Add Entry
+                <i class="bi bi-plus-circle"></i> Add OT Row
             </button>
         </div>
 
         <div class="form-card">
-            <div class="card-title"><i class="bi bi-house"></i> Accommodation</div>
+            <div class="card-title">
+                <i class="bi bi-house"></i> Accommodation
+                <span class="ms-auto total-badge" id="sumAcc">Rs 0.00</span>
+            </div>
             <div id="accContainer"></div>
             <button type="button" class="add-btn" onclick="addAcc()">
                 <i class="bi bi-plus-circle"></i> Add Accommodation
@@ -419,52 +425,34 @@
         </div>
 
         <div class="form-card">
-            <div class="card-title"><i class="bi bi-fuel-pump"></i> Fuel & Transport</div>
-            
-            <div class="form-group">
-                <label class="form-label">Vehicle Number</label>
-                <input type="text" class="form-control" id="vehicleNo">
+            <div class="card-title">
+                <i class="bi bi-fuel-pump"></i> Fuel & Transport
+                <span class="ms-auto total-badge" id="sumFuel">Rs 0.00</span>
             </div>
-
-            <div class="form-group">
-                <label class="form-label">Driver Name</label>
-                <input type="text" class="form-control" id="driverName">
-            </div>
-
             <div id="fuelContainer"></div>
             <button type="button" class="add-btn" onclick="addFuel()">
-                <i class="bi bi-plus-circle"></i> Add Fuel Entry
+                <i class="bi bi-plus-circle"></i> Add Fuel Row
             </button>
         </div>
 
         <div class="form-card">
-            <div class="card-title"><i class="bi bi-calculator"></i> Summary</div>
-            
-            <div class="form-group">
-                <label class="form-label">Remarks</label>
-                <textarea class="form-control" id="remarks" rows="3"></textarea>
-            </div>
-
+            <div class="card-title"><i class="bi bi-calculator"></i> Claim Summary</div>
             <div class="summary-box">
                 <div class="summary-row">
-                    <span>Total OT Hours:</span>
-                    <span class="total-badge" id="sumOT">0</span>
+                    <span>Total Meals</span>
+                    <span id="sumMeals">Rs 0.00</span>
                 </div>
                 <div class="summary-row">
-                    <span>Total Meals:</span>
-                    <span class="total-badge" id="sumMeals">Rs 0</span>
+                    <span>Total Accommodation</span>
+                    <span id="sumAccSummary">Rs 0.00</span>
                 </div>
                 <div class="summary-row">
-                    <span>Total Accommodation:</span>
-                    <span class="total-badge" id="sumAcc">Rs 0</span>
+                    <span>Total Fuel</span>
+                    <span id="sumFuelSummary">Rs 0.00</span>
                 </div>
                 <div class="summary-row">
-                    <span>Total Fuel:</span>
-                    <span class="total-badge" id="sumFuel">Rs 0</span>
-                </div>
-                <div class="summary-row">
-                    <span>GRAND TOTAL:</span>
-                    <span id="grandTotal">Rs 0</span>
+                    <span>GRAND TOTAL</span>
+                    <span id="grandTotal">Rs 0.00</span>
                 </div>
             </div>
         </div>
@@ -473,25 +461,25 @@
             <div class="card-title"><i class="bi bi-pen"></i> Signatures</div>
             
             <div class="signature-pad-container">
-                <label class="sig-label">Applicant Signature</label>
-                <canvas id="sig1" class="signature-canvas"></canvas>
+                <span class="sig-label">Applicant Signature</span>
                 <button type="button" class="clear-sig-btn" onclick="clearSig('sig1')">Clear</button>
+                <canvas id="sig1" class="signature-canvas"></canvas>
             </div>
 
             <div class="signature-pad-container">
-                <label class="sig-label">Team Leader</label>
-                <canvas id="sig2" class="signature-canvas"></canvas>
+                <span class="sig-label">Team Leader Signature</span>
                 <button type="button" class="clear-sig-btn" onclick="clearSig('sig2')">Clear</button>
+                <canvas id="sig2" class="signature-canvas"></canvas>
             </div>
 
             <div class="signature-pad-container">
-                <label class="sig-label">Approved By</label>
-                <canvas id="sig3" class="signature-canvas"></canvas>
+                <span class="sig-label">Approved By</span>
                 <button type="button" class="clear-sig-btn" onclick="clearSig('sig3')">Clear</button>
+                <canvas id="sig3" class="signature-canvas"></canvas>
             </div>
         </div>
 
-        <button type="submit" class="submit-btn" id="submitBtn">
+        <button type="submit" id="submitBtn" class="submit-btn">
             <i class="bi bi-download"></i> Download PDF
         </button>
     </form>
@@ -503,14 +491,12 @@
 
     window.onload = function() {
         document.getElementById('appDate').valueAsDate = new Date();
-        // Initialize Signatures and First Rows immediately
         initSignatures();
         addEntry();
         addAcc();
         addFuel();
     };
 
-    // --- LOCATION FUNCTION ---
     function getLocation() {
         const status = document.getElementById('locationStatus');
         const hidden = document.getElementById('locationData');
@@ -564,17 +550,14 @@
         );
     }
 
-    // --- SIGNATURES ---
     function initSignatures() {
         ['sig1', 'sig2', 'sig3'].forEach(id => {
             const canvas = document.getElementById(id);
             if(canvas) {
-                // Adjust canvas for high DPI
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
                 canvas.width = canvas.offsetWidth * ratio;
                 canvas.height = canvas.offsetHeight * ratio;
                 canvas.getContext("2d").scale(ratio, ratio);
-                
                 pads[id] = new SignaturePad(canvas, { backgroundColor: 'rgba(255,255,255,1)' });
             }
         });
@@ -584,7 +567,6 @@
         if(pads[id]) pads[id].clear();
     }
 
-    // --- ROW ADDING FUNCTIONS ---
     function addEntry() {
         entryCount++;
         const div = document.createElement('div');
@@ -596,12 +578,10 @@
                     <i class="bi bi-trash"></i>
                 </button>
             </div>
-            
             <div class="form-group">
                 <label class="form-label">Onsite Location</label>
                 <input type="text" class="form-control">
             </div>
-            
             <div class="row-2col">
                 <div class="form-group">
                     <label class="form-label">Date</label>
@@ -612,7 +592,6 @@
                     <input type="number" class="form-control ot-hours" oninput="calculate()" step="0.5" min="0">
                 </div>
             </div>
-            
             <div class="row-2col">
                 <div class="form-group">
                     <label class="form-label">From Time</label>
@@ -623,7 +602,6 @@
                     <input type="time" class="form-control">
                 </div>
             </div>
-            
             <div class="form-group">
                 <label class="form-label">Meals (Rs)</label>
                 <div class="row-2col">
@@ -691,48 +669,38 @@
         document.getElementById('fuelContainer').appendChild(div);
     }
 
-    // --- CALCULATION LOGIC ---
     function calculate() {
         let meals = 0, ot = 0, acc = 0, fuel = 0;
-
-        // Sum up all meal inputs
         document.querySelectorAll('.meal-input').forEach(i => {
             const val = parseFloat(i.value);
             if(!isNaN(val)) meals += val;
         });
-
-        // Sum up OT Hours
         document.querySelectorAll('.ot-hours').forEach(i => {
             const val = parseFloat(i.value);
             if(!isNaN(val)) ot += val;
         });
-
-        // Sum up Accommodation
         document.querySelectorAll('.acc-input').forEach(i => {
             const val = parseFloat(i.value);
             if(!isNaN(val)) acc += val;
         });
-
-        // Sum up Fuel
         document.querySelectorAll('.fuel-input').forEach(i => {
             const val = parseFloat(i.value);
             if(!isNaN(val)) fuel += val;
         });
 
-        // Update Text Content properly
         document.getElementById('sumOT').textContent = ot.toFixed(1);
         document.getElementById('sumMeals').textContent = 'Rs ' + meals.toFixed(2);
         document.getElementById('sumAcc').textContent = 'Rs ' + acc.toFixed(2);
+        document.getElementById('sumAccSummary').textContent = 'Rs ' + acc.toFixed(2);
         document.getElementById('sumFuel').textContent = 'Rs ' + fuel.toFixed(2);
+        document.getElementById('sumFuelSummary').textContent = 'Rs ' + fuel.toFixed(2);
         
         const grandTotal = meals + acc + fuel;
         document.getElementById('grandTotal').textContent = 'Rs ' + grandTotal.toFixed(2);
     }
 
-    // --- PDF GENERATION ---
     document.getElementById('claimForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        
         const btn = document.getElementById('submitBtn');
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating PDF...';
         btn.disabled = true;
@@ -746,7 +714,6 @@
                 alert("Error generating PDF: " + err.message);
                 btn.innerHTML = 'Error! Try Again';
             }
-            
             setTimeout(() => {
                 btn.innerHTML = '<i class="bi bi-download"></i> Download PDF';
                 btn.disabled = false;
@@ -757,14 +724,11 @@
     function generatePDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
-
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
         doc.text("Overtime & Claim Form", 105, 15, null, null, "center");
-
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
-        
         let y = 30;
         doc.text(`Name: ${document.getElementById('applicantName').value}`, 15, y);
         doc.text(`Date: ${document.getElementById('appDate').value}`, 150, y);
@@ -775,12 +739,10 @@
         y += 6;
         const loc = document.getElementById('locationData').value || "Not Checked In";
         doc.text(`Location: ${loc}`, 15, y);
-
         y += 10;
         doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
         doc.text("Summary", 15, y);
-        
         y += 8;
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
@@ -794,8 +756,6 @@
         y += 8;
         doc.setFont("helvetica", "bold");
         doc.text(`GRAND TOTAL: ${document.getElementById('grandTotal').textContent}`, 15, y);
-
-        // Signatures
         y += 20;
         if (!pads['sig1'].isEmpty()) {
             doc.addImage(pads['sig1'].toDataURL(), 'PNG', 15, y, 50, 30);
@@ -809,9 +769,49 @@
             doc.addImage(pads['sig3'].toDataURL(), 'PNG', 145, y, 50, 30);
             doc.text("Approved", 145, y + 35);
         }
-
         doc.save(`Claim_${document.getElementById('applicantName').value}.pdf`);
     }
+</script>
+
+<!-- Supabase Integration -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    // REPLACE THESE WITH YOUR ACTUAL SUPABASE CREDENTIALS
+    const SUPABASE_URL = 'https://jzjeiytwxtkpyuogphys.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6amVpeXR3eHRrcHl1b2dwaHlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NjA1MTIsImV4cCI6MjA4NDQzNjUxMn0.Zq-dCX5PQAhtkNJNWzJ9BAKoJdAOC0VHEtfis9T5ShM';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    document.getElementById('claimForm').addEventListener('submit', async function(e) {
+        // Gather data from the form and calculated fields
+        const claimData = {
+            applicant_name: document.getElementById('applicantName').value,
+            app_date: document.getElementById('appDate').value,
+            dept: document.getElementById('dept').value,
+            epf_no: document.getElementById('epfNo').value,
+            customer_name: document.getElementById('customerName').value,
+            location: document.getElementById('locationData').value || "Not Checked In",
+            total_ot_hours: parseFloat(document.getElementById('sumOT').textContent) || 0,
+            total_meals: parseFloat(document.getElementById('sumMeals').textContent.replace('Rs ', '')) || 0,
+            total_accommodation: parseFloat(document.getElementById('sumAcc').textContent.replace('Rs ', '')) || 0,
+            total_fuel: parseFloat(document.getElementById('sumFuel').textContent.replace('Rs ', '')) || 0,
+            grand_total: parseFloat(document.getElementById('grandTotal').textContent.replace('Rs ', '')) || 0,
+            // Capture signatures as Base64 strings
+            signature_applicant: pads['sig1'].isEmpty() ? null : pads['sig1'].toDataURL(),
+            signature_team_leader: pads['sig2'].isEmpty() ? null : pads['sig2'].toDataURL(),
+            signature_approved: pads['sig3'].isEmpty() ? null : pads['sig3'].toDataURL()
+        };
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('claims')
+                .insert([claimData]);
+
+            if (error) throw error;
+            console.log('Data successfully saved to Supabase:', data);
+        } catch (err) {
+            console.error('Error saving to Supabase:', err.message);
+        }
+    });
 </script>
 
 </body>
