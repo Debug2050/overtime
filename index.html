@@ -356,75 +356,80 @@
             <div class="card-title"><i class="bi bi-person-circle"></i> Personal Information</div>
             
             <div class="form-group">
-                <label class="form-label">Name of Applicant *</label>
+                <label for="applicantName" class="form-label">Applicant Name</label>
                 <input type="text" id="applicantName" class="form-control" required>
             </div>
-
             <div class="row-2col">
                 <div class="form-group">
-                    <label class="form-label">Date *</label>
+                    <label for="appDate" class="form-label">Application Date</label>
                     <input type="date" id="appDate" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">EPF No *</label>
-                    <input type="text" id="epfNo" class="form-control" required>
+                    <label for="dept" class="form-label">Department</label>
+                    <select id="dept" class="form-select" required>
+                        <option value="">Select Department</option>
+                        <option>Engineering</option>
+                        <option>Operations</option>
+                        <option>Maintenance</option>
+                        <option>IT Support</option>
+                    </select>
                 </div>
             </div>
-
-            <div class="form-group">
-                <label class="form-label">Department *</label>
-                <select id="dept" class="form-select" required>
-                    <option value="">Select Dept</option>
-                    <option>Engineering</option>
-                    <option>Operations</option>
-                    <option>Maintenance</option>
-                    <option>IT Support</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Customer Name *</label>
-                <input type="text" id="customerName" class="form-control" required>
+            <div class="row-2col">
+                <div class="form-group">
+                    <label for="epfNo" class="form-label">EPF No</label>
+                    <input type="text" id="epfNo" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="customerName" class="form-label">Customer Name</label>
+                    <input type="text" id="customerName" class="form-control" required>
+                </div>
             </div>
         </div>
 
         <div class="location-card">
-            <div class="card-title" style="color:white;"><i class="bi bi-geo-alt-fill"></i> Location Verification *</div>
+            <div class="card-title" style="color:white;"><i class="bi bi-geo-alt-fill"></i> Location Check-in</div>
+            <input type="hidden" id="locationData">
             <button type="button" class="location-btn" onclick="getLocation()">
-                <i class="bi bi-pin-map"></i> Capture Current Location
+                <i class="bi bi-cursor-fill"></i> Capture Current Location
             </button>
             <div id="locationStatus" class="location-status">
-                Location not captured yet
+                <i class="bi bi-info-circle"></i> Click the button to check-in.
             </div>
-            <input type="hidden" id="locationData">
         </div>
 
         <div class="form-card">
-            <div class="card-title"><i class="bi bi-clock-history"></i> Overtime Details</div>
-            <div id="entriesContainer"></div>
+            <div class="card-title"><i class="bi bi-clock-history"></i> Overtime & Meals</div>
+            <div id="entriesContainer">
+                <!-- OT Entries will be added here -->
+            </div>
             <button type="button" class="add-btn" onclick="addEntry()">
                 <i class="bi bi-plus-circle"></i> Add OT Entry
             </button>
         </div>
 
         <div class="form-card">
-            <div class="card-title"><i class="bi bi-house-door"></i> Accommodation</div>
-            <div id="accContainer"></div>
-            <button type="button" class="add-btn" onclick="addAcc()">
-                <i class="bi bi-plus-circle"></i> Add Accommodation
-            </button>
-        </div>
-
-        <div class="form-card">
-            <div class="card-title"><i class="bi bi-droplet"></i> Fuel & Other</div>
-            <div id="fuelContainer"></div>
+            <div class="card-title"><i class="bi bi-car-front"></i> Fuel & Travel</div>
+            <div id="fuelContainer">
+                <!-- Fuel Entries will be added here -->
+            </div>
             <button type="button" class="add-btn" onclick="addFuel()">
                 <i class="bi bi-plus-circle"></i> Add Fuel Entry
             </button>
         </div>
 
         <div class="form-card">
-            <div class="card-title"><i class="bi bi-calculator"></i> Claim Summary</div>
+            <div class="card-title"><i class="bi bi-house-door"></i> Accommodation</div>
+            <div id="accContainer">
+                <!-- Accommodation Entries will be added here -->
+            </div>
+            <button type="button" class="add-btn" onclick="addAcc()">
+                <i class="bi bi-plus-circle"></i> Add Accommodation Entry
+            </button>
+        </div>
+
+        <div class="form-card">
+            <div class="card-title"><i class="bi bi-calculator"></i> Summary</div>
             <div class="summary-box">
                 <div class="summary-row">
                     <span>Total OT Hours</span>
@@ -435,44 +440,44 @@
                     <span id="sumMeals">Rs 0.00</span>
                 </div>
                 <div class="summary-row">
-                    <span>Accommodation</span>
-                    <span id="sumAccSummary">Rs 0.00</span>
-                </div>
-                <div class="summary-row">
-                    <span>Fuel & Other</span>
+                    <span>Total Fuel</span>
                     <span id="sumFuelSummary">Rs 0.00</span>
                 </div>
                 <div class="summary-row">
-                    <span>GRAND TOTAL</span>
+                    <span>Total Accommodation</span>
+                    <span id="sumAccSummary">Rs 0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Grand Total Claim</span>
                     <span id="grandTotal">Rs 0.00</span>
                 </div>
             </div>
         </div>
 
-        <div class="form-card" style="margin-bottom: 40px;">
-            <div class="card-title"><i class="bi bi-pen"></i> Authorizations</div>
+        <div class="form-card">
+            <div class="card-title"><i class="bi bi-pen"></i> Signatures</div>
             
             <div class="signature-pad-container">
                 <span class="sig-label">Applicant Signature</span>
-                <button type="button" class="clear-sig-btn" onclick="clearSig('sig1')">Clear</button>
                 <canvas id="sig1" class="signature-canvas"></canvas>
+                <button type="button" class="clear-sig-btn" onclick="clearSig('sig1')">Clear</button>
             </div>
 
             <div class="signature-pad-container">
                 <span class="sig-label">Team Leader Signature</span>
-                <button type="button" class="clear-sig-btn" onclick="clearSig('sig2')">Clear</button>
                 <canvas id="sig2" class="signature-canvas"></canvas>
+                <button type="button" class="clear-sig-btn" onclick="clearSig('sig2')">Clear</button>
             </div>
 
             <div class="signature-pad-container">
                 <span class="sig-label">Approved By</span>
-                <button type="button" class="clear-sig-btn" onclick="clearSig('sig3')">Clear</button>
                 <canvas id="sig3" class="signature-canvas"></canvas>
+                <button type="button" class="clear-sig-btn" onclick="clearSig('sig3')">Clear</button>
             </div>
         </div>
 
         <button type="submit" id="submitBtn" class="submit-btn">
-            <i class="bi bi-download"></i> Download PDF
+            <i class="bi bi-download"></i> Submit & Download PDF
         </button>
     </form>
 </div>
@@ -482,22 +487,15 @@
     const pads = {};
 
     window.onload = () => {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('appDate').value = today;
         initSignatures();
-        addEntry();
+        addEntry(); // Start with one entry
+        calculate();
     };
 
-    function getLocation() {
+    async function getLocation() {
         const status = document.getElementById('locationStatus');
         const hidden = document.getElementById('locationData');
         
-        if (!navigator.geolocation) {
-            status.className = 'location-status location-error';
-            status.innerHTML = '<i class="bi bi-x-circle"></i> Location not supported';
-            return;
-        }
-
         status.className = 'location-status';
         status.innerHTML = '<i class="bi bi-hourglass-split"></i> Getting location...';
 
@@ -693,9 +691,30 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6amVpeXR3eHRrcHl1b2dwaHlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NjA1MTIsImV4cCI6MjA4NDQzNjUxMn0.Zq-dCX5PQAhtkNJNWzJ9BAKoJdAOC0VHEtfis9T5ShM';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // --- NEW FUNCTION: Database Connection Check ---
+    async function checkDatabaseConnection() {
+        try {
+            // Perform a lightweight query to check connectivity
+            const { data, error } = await supabaseClient.from('claims').select('id').limit(1);
+            if (error) throw error;
+            return { success: true };
+        } catch (err) {
+            return { success: false, message: err.message };
+        }
+    }
+    // --- END NEW FUNCTION ---
+
     document.getElementById('claimForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const btn = document.getElementById('submitBtn');
+
+        // --- NEW CODE: Pre-submission Connection Check ---
+        const connectionCheck = await checkDatabaseConnection();
+        if (!connectionCheck.success) {
+            alert("Database connection failed. Please check your internet or database status.\nError: " + connectionCheck.message);
+            return; // Stop execution if connection fails
+        }
+        // --- END NEW CODE ---
         
         // 1. Check Location
         const locationVal = document.getElementById('locationData').value;
@@ -747,8 +766,9 @@
             return; // STOP HERE - NO DOWNLOAD
         }
 
+        // Reset button after a delay
         setTimeout(() => {
-            btn.innerHTML = '<i class="bi bi-download"></i> Download PDF';
+            btn.innerHTML = '<i class="bi bi-download"></i> Submit & Download PDF';
             btn.disabled = false;
         }, 3000);
     });
@@ -808,5 +828,3 @@
 
 </body>
 </html>
-
-
