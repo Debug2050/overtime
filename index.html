@@ -687,14 +687,13 @@
     }
 
     // Supabase Configuration
-    const SUPABASE_URL = '';
+    const SUPABASE_URL = 'https://jzjeiytwxtkpyuogphys.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6amVpeXR3eHRrcHl1b2dwaHlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NjA1MTIsImV4cCI6MjA4NDQzNjUxMn0.Zq-dCX5PQAhtkNJNWzJ9BAKoJdAOC0VHEtfis9T5ShM';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- NEW FUNCTION: Database Connection Check ---
+    // --- Database Connection Check ---
     async function checkDatabaseConnection() {
         try {
-            // Perform a lightweight query to check connectivity
             const { data, error } = await supabaseClient.from('claims').select('id').limit(1);
             if (error) throw error;
             return { success: true };
@@ -702,20 +701,11 @@
             return { success: false, message: err.message };
         }
     }
-    // --- END NEW FUNCTION ---
 
     document.getElementById('claimForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const btn = document.getElementById('submitBtn');
 
-        // --- NEW CODE: Pre-submission Connection Check ---
-        const connectionCheck = await checkDatabaseConnection();
-        if (!connectionCheck.success) {
-            alert("Database connection failed. Please check your internet or database status.\nError: " + connectionCheck.message);
-            return; // Stop execution if connection fails
-        }
-        // --- END NEW CODE ---
-        
         // 1. Check Location
         const locationVal = document.getElementById('locationData').value;
         if (!locationVal) {
@@ -724,8 +714,17 @@
             return;
         }
 
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving to Database...';
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Connecting to Database...';
         btn.disabled = true;
+
+        // 2. PRE-CHECK: Database Connection
+        const connectionCheck = await checkDatabaseConnection();
+        if (!connectionCheck.success) {
+            alert("DATABASE NOT CONNECTED: Download blocked. Please check your internet or database status.\nError: " + connectionCheck.message);
+            btn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Connection Failed';
+            btn.disabled = false;
+            return; // STRICT BLOCK: NO DOWNLOAD
+        }
 
         // Gather data
         const claimData = {
@@ -746,24 +745,25 @@
         };
 
         try {
-            // 2. Save to Database (MUST SUCCEED)
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving to Database...';
+            // 3. Save to Database (MUST SUCCEED)
             const { data, error } = await supabaseClient
                 .from('claims')
                 .insert([claimData]);
 
             if (error) throw error;
             
-            // 3. Generate and Download PDF (ONLY IF DB SUCCESS)
+            // 4. Generate and Download PDF (ONLY IF DB SUCCESS)
             btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating PDF...';
             generatePDF();
             
             btn.innerHTML = '<i class="bi bi-check-circle"></i> Saved & Downloaded!';
         } catch (err) {
             console.error('Database Error:', err.message);
-            alert("Database Error: Could not save claim. PDF download blocked.\n\nDetails: " + err.message);
+            alert("DATABASE ERROR: Could not save claim. PDF download blocked.\n\nDetails: " + err.message);
             btn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> DB Error - Try Again';
             btn.disabled = false;
-            return; // STOP HERE - NO DOWNLOAD
+            return; // STRICT BLOCK: NO DOWNLOAD
         }
 
         // Reset button after a delay
@@ -828,4 +828,3 @@
 
 </body>
 </html>
-
