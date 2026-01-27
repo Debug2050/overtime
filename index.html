@@ -356,80 +356,75 @@
             <div class="card-title"><i class="bi bi-person-circle"></i> Personal Information</div>
             
             <div class="form-group">
-                <label for="applicantName" class="form-label">Applicant Name</label>
+                <label class="form-label">Name of Applicant *</label>
                 <input type="text" id="applicantName" class="form-control" required>
             </div>
+
             <div class="row-2col">
                 <div class="form-group">
-                    <label for="appDate" class="form-label">Application Date</label>
+                    <label class="form-label">Date *</label>
                     <input type="date" id="appDate" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label for="dept" class="form-label">Department</label>
-                    <select id="dept" class="form-select" required>
-                        <option value="">Select Department</option>
-                        <option>Engineering</option>
-                        <option>Operations</option>
-                        <option>Maintenance</option>
-                        <option>IT Support</option>
-                    </select>
-                </div>
-            </div>
-            <div class="row-2col">
-                <div class="form-group">
-                    <label for="epfNo" class="form-label">EPF No</label>
+                    <label class="form-label">EPF No *</label>
                     <input type="text" id="epfNo" class="form-control" required>
                 </div>
-                <div class="form-group">
-                    <label for="customerName" class="form-label">Customer Name</label>
-                    <input type="text" id="customerName" class="form-control" required>
-                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Department *</label>
+                <select id="dept" class="form-select" required>
+                    <option value="">Select Dept</option>
+                    <option>Engineering</option>
+                    <option>Operations</option>
+                    <option>Maintenance</option>
+                    <option>IT Support</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Customer Name *</label>
+                <input type="text" id="customerName" class="form-control" required>
             </div>
         </div>
 
         <div class="location-card">
-            <div class="card-title" style="color:white;"><i class="bi bi-geo-alt-fill"></i> Location Check-in</div>
-            <input type="hidden" id="locationData">
+            <div class="card-title" style="color:white;"><i class="bi bi-geo-alt-fill"></i> Location Verification *</div>
             <button type="button" class="location-btn" onclick="getLocation()">
-                <i class="bi bi-cursor-fill"></i> Capture Current Location
+                <i class="bi bi-pin-map"></i> Capture Current Location
             </button>
             <div id="locationStatus" class="location-status">
-                <i class="bi bi-info-circle"></i> Click the button to check-in.
+                Location not captured yet
             </div>
+            <input type="hidden" id="locationData">
         </div>
 
         <div class="form-card">
-            <div class="card-title"><i class="bi bi-clock-history"></i> Overtime & Meals</div>
-            <div id="entriesContainer">
-                <!-- OT Entries will be added here -->
-            </div>
+            <div class="card-title"><i class="bi bi-clock-history"></i> Overtime Details</div>
+            <div id="entriesContainer"></div>
             <button type="button" class="add-btn" onclick="addEntry()">
                 <i class="bi bi-plus-circle"></i> Add OT Entry
             </button>
         </div>
 
         <div class="form-card">
-            <div class="card-title"><i class="bi bi-car-front"></i> Fuel & Travel</div>
-            <div id="fuelContainer">
-                <!-- Fuel Entries will be added here -->
-            </div>
+            <div class="card-title"><i class="bi bi-house-door"></i> Accommodation</div>
+            <div id="accContainer"></div>
+            <button type="button" class="add-btn" onclick="addAcc()">
+                <i class="bi bi-plus-circle"></i> Add Accommodation
+            </button>
+        </div>
+
+        <div class="form-card">
+            <div class="card-title"><i class="bi bi-droplet"></i> Fuel & Other</div>
+            <div id="fuelContainer"></div>
             <button type="button" class="add-btn" onclick="addFuel()">
                 <i class="bi bi-plus-circle"></i> Add Fuel Entry
             </button>
         </div>
 
         <div class="form-card">
-            <div class="card-title"><i class="bi bi-house-door"></i> Accommodation</div>
-            <div id="accContainer">
-                <!-- Accommodation Entries will be added here -->
-            </div>
-            <button type="button" class="add-btn" onclick="addAcc()">
-                <i class="bi bi-plus-circle"></i> Add Accommodation Entry
-            </button>
-        </div>
-
-        <div class="form-card">
-            <div class="card-title"><i class="bi bi-calculator"></i> Summary</div>
+            <div class="card-title"><i class="bi bi-calculator"></i> Claim Summary</div>
             <div class="summary-box">
                 <div class="summary-row">
                     <span>Total OT Hours</span>
@@ -440,39 +435,39 @@
                     <span id="sumMeals">Rs 0.00</span>
                 </div>
                 <div class="summary-row">
-                    <span>Total Fuel</span>
-                    <span id="sumFuelSummary">Rs 0.00</span>
-                </div>
-                <div class="summary-row">
-                    <span>Total Accommodation</span>
+                    <span>Accommodation</span>
                     <span id="sumAccSummary">Rs 0.00</span>
                 </div>
                 <div class="summary-row">
-                    <span>Grand Total Claim</span>
+                    <span>Fuel & Other</span>
+                    <span id="sumFuelSummary">Rs 0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>GRAND TOTAL</span>
                     <span id="grandTotal">Rs 0.00</span>
                 </div>
             </div>
         </div>
 
-        <div class="form-card">
-            <div class="card-title"><i class="bi bi-pen"></i> Signatures</div>
+        <div class="form-card" style="margin-bottom: 40px;">
+            <div class="card-title"><i class="bi bi-pen"></i> Authorizations</div>
             
             <div class="signature-pad-container">
                 <span class="sig-label">Applicant Signature</span>
-                <canvas id="sig1" class="signature-canvas"></canvas>
                 <button type="button" class="clear-sig-btn" onclick="clearSig('sig1')">Clear</button>
+                <canvas id="sig1" class="signature-canvas"></canvas>
             </div>
 
             <div class="signature-pad-container">
                 <span class="sig-label">Team Leader Signature</span>
-                <canvas id="sig2" class="signature-canvas"></canvas>
                 <button type="button" class="clear-sig-btn" onclick="clearSig('sig2')">Clear</button>
+                <canvas id="sig2" class="signature-canvas"></canvas>
             </div>
 
             <div class="signature-pad-container">
                 <span class="sig-label">Approved By</span>
-                <canvas id="sig3" class="signature-canvas"></canvas>
                 <button type="button" class="clear-sig-btn" onclick="clearSig('sig3')">Clear</button>
+                <canvas id="sig3" class="signature-canvas"></canvas>
             </div>
         </div>
 
@@ -487,15 +482,22 @@
     const pads = {};
 
     window.onload = () => {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('appDate').value = today;
         initSignatures();
-        addEntry(); // Start with one entry
-        calculate();
+        addEntry();
     };
 
-    async function getLocation() {
+    function getLocation() {
         const status = document.getElementById('locationStatus');
         const hidden = document.getElementById('locationData');
         
+        if (!navigator.geolocation) {
+            status.className = 'location-status location-error';
+            status.innerHTML = '<i class="bi bi-x-circle"></i> Location not supported';
+            return;
+        }
+
         status.className = 'location-status';
         status.innerHTML = '<i class="bi bi-hourglass-split"></i> Getting location...';
 
@@ -569,12 +571,12 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Onsite Location</label>
-                <input type="text" class="form-control">
+                <input type="text" class="form-control onsite-location">
             </div>
             <div class="row-2col">
                 <div class="form-group">
                     <label class="form-label">Date</label>
-                    <input type="date" class="form-control">
+                    <input type="date" class="form-control entry-date">
                 </div>
                 <div class="form-group">
                     <label class="form-label">OT Hours (Auto)</label>
@@ -594,12 +596,12 @@
             <div class="form-group">
                 <label class="form-label">Meals (Rs)</label>
                 <div class="row-2col">
-                    <input type="number" class="form-control meal-input" placeholder="Breakfast" oninput="calculate()" min="0">
-                    <input type="number" class="form-control meal-input" placeholder="Lunch" oninput="calculate()" min="0">
+                    <input type="number" class="form-control meal-input breakfast" placeholder="Breakfast" oninput="calculate()" min="0">
+                    <input type="number" class="form-control meal-input lunch" placeholder="Lunch" oninput="calculate()" min="0">
                 </div>
                 <div class="row-2col" style="margin-top:8px;">
-                    <input type="number" class="form-control meal-input" placeholder="Tea" oninput="calculate()" min="0">
-                    <input type="number" class="form-control meal-input" placeholder="Dinner" oninput="calculate()" min="0">
+                    <input type="number" class="form-control meal-input tea" placeholder="Tea" oninput="calculate()" min="0">
+                    <input type="number" class="form-control meal-input dinner" placeholder="Dinner" oninput="calculate()" min="0">
                 </div>
             </div>
         `;
@@ -622,9 +624,6 @@
             if (diff < 0) diff += 24 * 60;
             
             const hours = diff / 60;
-            // Assuming standard 8 hours shift, OT is anything above 8? 
-            // Or is the whole duration OT? Based on "OT Hours" label, I'll assume the whole duration is recorded as OT for this form.
-            // If there's a standard shift to subtract, you can add it here.
             otInput.value = hours.toFixed(1);
         } else {
             otInput.value = 0;
@@ -645,7 +644,7 @@
             <div class="row-2col">
                 <div class="form-group">
                     <label class="form-label">Date</label>
-                    <input type="date" class="form-control">
+                    <input type="date" class="form-control acc-date">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Amount (Rs)</label>
@@ -669,11 +668,11 @@
             <div class="row-3col">
                 <div class="form-group">
                     <label class="form-label">Date</label>
-                    <input type="date" class="form-control">
+                    <input type="date" class="form-control fuel-date">
                 </div>
                 <div class="form-group">
                     <label class="form-label">KM</label>
-                    <input type="number" class="form-control" min="0">
+                    <input type="number" class="form-control fuel-km" min="0">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Amount</label>
@@ -717,7 +716,6 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6amVpeXR3eHRrcHl1b2dwaHlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NjA1MTIsImV4cCI6MjA4NDQzNjUxMn0.Zq-dCX5PQAhtkNJNWzJ9BAKoJdAOC0VHEtfis9T5ShM';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- Database Connection Check ---
     async function checkDatabaseConnection() {
         try {
             const { data, error } = await supabaseClient.from('claims').select('id').limit(1);
@@ -732,7 +730,6 @@
         e.preventDefault();
         const btn = document.getElementById('submitBtn');
 
-        // 1. Check Location
         const locationVal = document.getElementById('locationData').value;
         if (!locationVal) {
             alert("Please capture your location before submitting.");
@@ -743,16 +740,24 @@
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Connecting to Database...';
         btn.disabled = true;
 
-        // 2. PRE-CHECK: Database Connection
         const connectionCheck = await checkDatabaseConnection();
         if (!connectionCheck.success) {
             alert("DATABASE NOT CONNECTED: Download blocked. Please check your internet or database status.\nError: " + connectionCheck.message);
             btn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Connection Failed';
             btn.disabled = false;
-            return; // STRICT BLOCK: NO DOWNLOAD
+            return;
         }
 
-        // Gather data
+        const firstEntry = document.querySelector('.entry-item');
+        let inTimeVal = null;
+        let outTimeVal = null;
+        if (firstEntry) {
+            const inInput = firstEntry.querySelector('.in-time');
+            const outInput = firstEntry.querySelector('.out-time');
+            if (inInput && inInput.value) inTimeVal = inInput.value;
+            if (outInput && outInput.value) outTimeVal = outInput.value;
+        }
+
         const claimData = {
             applicant_name: document.getElementById('applicantName').value,
             app_date: document.getElementById('appDate').value,
@@ -767,19 +772,16 @@
             grand_total: parseFloat(document.getElementById('grandTotal').textContent.replace('Rs ', '')) || 0,
             signature_applicant: pads['sig1'].isEmpty() ? null : pads['sig1'].toDataURL(),
             signature_team_leader: pads['sig2'].isEmpty() ? null : pads['sig2'].toDataURL(),
-            signature_approved: pads['sig3'].isEmpty() ? null : pads['sig3'].toDataURL()
+            signature_approved: pads['sig3'].isEmpty() ? null : pads['sig3'].toDataURL(),
+            in_time: inTimeVal,
+            out_time: outTimeVal
         };
 
         try {
             btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving to Database...';
-            // 3. Save to Database (MUST SUCCEED)
-            const { data, error } = await supabaseClient
-                .from('claims')
-                .insert([claimData]);
-
+            const { data, error } = await supabaseClient.from('claims').insert([claimData]);
             if (error) throw error;
             
-            // 4. Generate and Download PDF (ONLY IF DB SUCCESS)
             btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating PDF...';
             generatePDF();
             
@@ -789,10 +791,9 @@
             alert("DATABASE ERROR: Could not save claim. PDF download blocked.\n\nDetails: " + err.message);
             btn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> DB Error - Try Again';
             btn.disabled = false;
-            return; // STRICT BLOCK: NO DOWNLOAD
+            return;
         }
 
-        // Reset button after a delay
         setTimeout(() => {
             btn.innerHTML = '<i class="bi bi-download"></i> Submit & Download PDF';
             btn.disabled = false;
@@ -800,55 +801,209 @@
     });
 
     function generatePDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
-        doc.setFontSize(16);
-        doc.setFont("helvetica", "bold");
-        doc.text("Overtime & Claim Form", 105, 15, null, null, "center");
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        let y = 30;
-        doc.text(`Name: ${document.getElementById('applicantName').value}`, 15, y);
-        doc.text(`Date: ${document.getElementById('appDate').value}`, 150, y);
-        y += 6;
-        doc.text(`Dept: ${document.getElementById('dept').value}`, 15, y);
-        doc.text(`EPF: ${document.getElementById('epfNo').value}`, 70, y);
-        doc.text(`Customer: ${document.getElementById('customerName').value}`, 110, y);
-        y += 6;
-        const loc = document.getElementById('locationData').value || "Not Checked In";
-        doc.text(`Location: ${loc}`, 15, y);
-        y += 10;
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.text("Summary", 15, y);
-        y += 8;
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.text(`Total OT Hours: ${document.getElementById('sumOT').textContent}`, 15, y);
-        y += 6;
-        doc.text(`Total Meals: ${document.getElementById('sumMeals').textContent}`, 15, y);
-        y += 6;
-        doc.text(`Total Accommodation: ${document.getElementById('sumAccSummary').textContent}`, 15, y);
-        y += 6;
-        doc.text(`Total Fuel: ${document.getElementById('sumFuelSummary').textContent}`, 15, y);
-        y += 8;
-        doc.setFont("helvetica", "bold");
-        doc.text(`GRAND TOTAL: ${document.getElementById('grandTotal').textContent}`, 15, y);
-        y += 20;
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 15;
+            
+            // --- Header Section ---
+            doc.setFillColor(102, 126, 234); // Primary Color
+            doc.rect(0, 0, pageWidth, 40, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
+            doc.text("OVERTIME & CLAIM FORM", pageWidth / 2, 20, { align: "center" });
+            
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text("Official Document for Expense Reimbursement", pageWidth / 2, 28, { align: "center" });
 
-        if (!pads['sig1'].isEmpty()) {
-            doc.addImage(pads['sig1'].toDataURL(), 'PNG', 15, y, 50, 30);
-            doc.text("Applicant", 15, y + 35);
+            // --- Personal Information Section ---
+            let y = 50;
+            doc.setTextColor(40, 40, 40);
+            doc.setFontSize(14);
+            doc.setFont("helvetica", "bold");
+            doc.text("Personal Information", margin, y);
+            
+            y += 2;
+            doc.setDrawColor(102, 126, 234);
+            doc.setLineWidth(0.5);
+            doc.line(margin, y, pageWidth - margin, y);
+            
+            y += 8;
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text("Applicant Name:", margin, y);
+            doc.setFont("helvetica", "normal");
+            doc.text(document.getElementById('applicantName').value || "N/A", margin + 35, y);
+            
+            doc.setFont("helvetica", "bold");
+            doc.text("Date:", pageWidth / 2 + 10, y);
+            doc.setFont("helvetica", "normal");
+            doc.text(document.getElementById('appDate').value || "N/A", pageWidth / 2 + 45, y);
+            
+            y += 6;
+            doc.setFont("helvetica", "bold");
+            doc.text("Department:", margin, y);
+            doc.setFont("helvetica", "normal");
+            doc.text(document.getElementById('dept').value || "N/A", margin + 35, y);
+            
+            doc.setFont("helvetica", "bold");
+            doc.text("EPF No:", pageWidth / 2 + 10, y);
+            doc.setFont("helvetica", "normal");
+            doc.text(document.getElementById('epfNo').value || "N/A", pageWidth / 2 + 45, y);
+            
+            y += 6;
+            doc.setFont("helvetica", "bold");
+            doc.text("Customer:", margin, y);
+            doc.setFont("helvetica", "normal");
+            doc.text(document.getElementById('customerName').value || "N/A", margin + 35, y);
+            
+            y += 6;
+            doc.setFont("helvetica", "bold");
+            doc.text("Location:", margin, y);
+            doc.setFont("helvetica", "normal");
+            const loc = document.getElementById('locationData').value || "Not Captured";
+            const splitLoc = doc.splitTextToSize(loc, pageWidth - margin - 50);
+            doc.text(splitLoc, margin + 35, y);
+            y += (splitLoc.length * 4);
+
+            // --- Overtime Details Table ---
+            y += 5;
+            doc.setFontSize(14);
+            doc.setFont("helvetica", "bold");
+            doc.text("Overtime & Meals Details", margin, y);
+            
+            const otData = [];
+            document.querySelectorAll('#entriesContainer .entry-item').forEach((item, index) => {
+                const onsiteLoc = item.querySelector('.onsite-location')?.value || "N/A";
+                const entryDate = item.querySelector('.entry-date')?.value || "N/A";
+                const inTime = item.querySelector('.in-time')?.value || "N/A";
+                const outTime = item.querySelector('.out-time')?.value || "N/A";
+                const otHours = item.querySelector('.ot-hours')?.value || "0";
+                const breakfast = item.querySelector('.breakfast')?.value || "0";
+                const lunch = item.querySelector('.lunch')?.value || "0";
+                const tea = item.querySelector('.tea')?.value || "0";
+                const dinner = item.querySelector('.dinner')?.value || "0";
+                
+                otData.push([
+                    index + 1,
+                    entryDate,
+                    onsiteLoc,
+                    inTime,
+                    outTime,
+                    otHours,
+                    breakfast,
+                    lunch,
+                    tea,
+                    dinner
+                ]);
+            });
+
+            doc.autoTable({
+                startY: y + 4,
+                head: [['#', 'Date', 'Location', 'In', 'Out', 'OT', 'Brkfst', 'Lnch', 'Tea', 'Dnnr']],
+                body: otData,
+                theme: 'striped',
+                headStyles: { fillColor: [102, 126, 234], textColor: 255 },
+                styles: { fontSize: 8, cellPadding: 2 },
+                columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 20 }, 2: { cellWidth: 35 } }
+            });
+            
+            y = doc.lastAutoTable.finalY + 10;
+
+            // --- Accommodation & Fuel Section ---
+            const otherData = [];
+            document.querySelectorAll('#accContainer .entry-item').forEach(item => {
+                const date = item.querySelector('.acc-date')?.value || "N/A";
+                const amount = item.querySelector('.acc-input')?.value || "0";
+                otherData.push([date, 'Accommodation', amount]);
+            });
+            document.querySelectorAll('#fuelContainer .entry-item').forEach(item => {
+                const date = item.querySelector('.fuel-date')?.value || "N/A";
+                const km = item.querySelector('.fuel-km')?.value || "0";
+                const amount = item.querySelector('.fuel-input')?.value || "0";
+                otherData.push([date, `Fuel (${km} KM)`, amount]);
+            });
+
+            if (otherData.length > 0) {
+                doc.setFontSize(14);
+                doc.setFont("helvetica", "bold");
+                doc.text("Other Expenses", margin, y);
+                doc.autoTable({
+                    startY: y + 4,
+                    head: [['Date', 'Description', 'Amount (Rs)']],
+                    body: otherData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [118, 75, 162], textColor: 255 },
+                    styles: { fontSize: 9 }
+                });
+                y = doc.lastAutoTable.finalY + 10;
+            }
+
+            // --- Summary Section ---
+            if (y > 220) { doc.addPage(); y = 20; }
+            
+            doc.setFillColor(245, 245, 245);
+            doc.rect(margin, y, pageWidth - (margin * 2), 35, 'F');
+            
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text("CLAIM SUMMARY", margin + 5, y + 8);
+            
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Total OT Hours: ${document.getElementById('sumOT').textContent}`, margin + 5, y + 16);
+            doc.text(`Total Meals: ${document.getElementById('sumMeals').textContent}`, margin + 5, y + 22);
+            doc.text(`Accommodation: ${document.getElementById('sumAccSummary').textContent}`, pageWidth / 2, y + 16);
+            doc.text(`Fuel & Other: ${document.getElementById('sumFuelSummary').textContent}`, pageWidth / 2, y + 22);
+            
+            doc.setFontSize(14);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(102, 126, 234);
+            doc.text(`GRAND TOTAL: ${document.getElementById('grandTotal').textContent}`, margin + 5, y + 30);
+            
+            y += 45;
+
+            // --- Signatures Section ---
+            doc.setTextColor(40, 40, 40);
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            
+            const sigWidth = 50;
+            const sigHeight = 25;
+            
+            if (!pads['sig1'].isEmpty()) {
+                doc.addImage(pads['sig1'].toDataURL(), 'PNG', margin, y, sigWidth, sigHeight);
+                doc.line(margin, y + sigHeight, margin + sigWidth, y + sigHeight);
+                doc.text("Applicant Signature", margin, y + sigHeight + 5);
+            }
+            
+            if (!pads['sig2'].isEmpty()) {
+                doc.addImage(pads['sig2'].toDataURL(), 'PNG', pageWidth / 2 - sigWidth / 2, y, sigWidth, sigHeight);
+                doc.line(pageWidth / 2 - sigWidth / 2, y + sigHeight, pageWidth / 2 + sigWidth / 2, y + sigHeight);
+                doc.text("Team Leader", pageWidth / 2 - sigWidth / 2, y + sigHeight + 5);
+            }
+            
+            if (!pads['sig3'].isEmpty()) {
+                doc.addImage(pads['sig3'].toDataURL(), 'PNG', pageWidth - margin - sigWidth, y, sigWidth, sigHeight);
+                doc.line(pageWidth - margin - sigWidth, y + sigHeight, pageWidth - margin, y + sigHeight);
+                doc.text("Approved By", pageWidth - margin - sigWidth, y + sigHeight + 5);
+            }
+
+            // --- Footer ---
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "italic");
+            doc.setTextColor(150, 150, 150);
+            doc.text(`Generated on: ${new Date().toLocaleString()}`, pageWidth / 2, 285, { align: "center" });
+
+            doc.save(`Claim_${document.getElementById('applicantName').value}_${document.getElementById('appDate').value}.pdf`);
+        } catch (pdfError) {
+            console.error("PDF Generation Error:", pdfError);
+            alert("Error generating beautiful PDF. Please check if all fields are filled correctly.\n\nDetails: " + pdfError.message);
         }
-        if (!pads['sig2'].isEmpty()) {
-            doc.addImage(pads['sig2'].toDataURL(), 'PNG', 80, y, 50, 30);
-            doc.text("Team Leader", 80, y + 35);
-        }
-        if (!pads['sig3'].isEmpty()) {
-            doc.addImage(pads['sig3'].toDataURL(), 'PNG', 145, y, 50, 30);
-            doc.text("Approved", 145, y + 35);
-        }
-        doc.save(`Claim_${document.getElementById('applicantName').value}.pdf`);
     }
 </script>
 
